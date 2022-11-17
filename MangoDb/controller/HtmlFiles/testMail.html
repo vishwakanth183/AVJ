@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        .mainView {
+            background-color: white;
+        }
+
+        .nameView {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 18px;
+            color: black;
+            background-color: white;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid white;
+            border-collapse: collapse;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+        }
+
+        th,
+        td {
+            width: 25%;
+        }
+
+        th {
+            background-color: darkblue;
+            color: gold;
+        }
+
+        td:nth-child(even) {
+            background-color: lightgrey;
+        }
+
+        td:nth-child(odd) {
+            background-color: lemonchiffon;
+        }
+
+        .firstColumn {
+            text-align: start;
+        }
+    </style>
+
+    <script>
+        const orderData = [{
+            productName: 'Chicken Biriyani (1/2 kg)',
+            quantity: 1,
+            tax: 3,
+            price: 120
+        }]
+
+        document.getElementById('test').innerHTML = orderData.map((item) =>
+            `<tr>
+                <td class="firstColumn">₹{item.productName}</td>
+                <td>₹{item.quantity}</td>
+                <td>₹{item.tax}</td>
+                <td>₹{item.price}</td>
+            </tr>`
+        ).join('')
+
+    </script>
+
+</head>
+
+<body>
+    <div class="mainView">
+
+
+        <div style="flex-direction:column;align-items:center;">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDWHhizElOU8Ujn-JY-BDq-tWCC-5_qCwp8A&usqp=CAU" alt="VKSHOP" style="width: 50px;heigt :50px">
+            <h1 class="nameView">Mr.{{username.name}} your order is placed</h1>
+        </div>
+        <div class="tableView">
+            <table>
+
+                <div id="test"></div>
+
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Tax (₹89.00)</th>
+                    <th>Price</th>
+                </tr>
+
+                <tr>
+                    <td class="firstColumn">Chicken Biriyani (1/2 kg)</td>
+                    <td>1</td>
+                    <td>₹3.00</td>
+                    <td>120.00 * 1 = ₹120.00</td>
+                </tr>
+
+                <tr>
+                    <td class="firstColumn">Mutton Biriyani (1 kg)</td>
+                    <td>5</td>
+                    <td>₹10.00</td>
+                    <td>350.00 * 5 = ₹1750.00</td>
+                </tr>
+
+                <tr>
+                    <td class="firstColumn">Tandoori (Full)</td>
+                    <td>1</td>
+                    <td>₹15.00</td>
+                    <td>420.00 * 1 = ₹420.00</td>
+                </tr>
+
+                <tr>
+                    <td class="firstColumn">Parotta</td>
+                    <td>15</td>
+                    <td>₹1.00</td>
+                    <td>10.00 * 15 = ₹150.00</td>
+                </tr>
+
+                <tr>
+                    <td class="firstColumn">Omlette</td>
+                    <td>3</td>
+                    <td>₹2.00</td>
+                    <td>15.00 * 3 = ₹45.00</td>
+                </tr>
+
+                <!-- <tr>
+                    <td colspan="2" style="background-color: white;"></td>
+                    <td style="background-color: darkblue;color: goldenrod;font-weight: bolder">₹89</td>
+                    <td style="background-color: darkblue;color: goldenrod;font-weight: bolder">₹2385</td>
+                </tr> -->
+
+                <tr>
+                    <td colspan="3" style="background-color: darkblue;color: goldenrod;font-weight: bolder;">Grand Total
+                        : </td>
+                    <td style="background-color: darkblue;color: goldenrod;font-weight: bolder;">₹2474.00</td>
+                </tr>
+
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>

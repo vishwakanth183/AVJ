@@ -1,0 +1,9 @@
+app.use(require('./User'));
+app.use(require('./Product'));
+app.use(require('./ManualOrder'));
+app.use(require('./Order'));
+app.use(require('./Role'))
+app.use(require('./FamilyExpense'))
+app.use(require('./Investment'))
+app.use(require('./Borrowed'))
+app.use(require('./LineBusiness'))
