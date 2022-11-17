@@ -1,0 +1,480 @@
+import React, { useEffect, useCallback, useState, useRef } from "react";
+import { useNavigate } from 'react-router-dom'
+import { Box, Button, Center, Text, useToast, Image, Badge, useMediaQuery, VStack, Wrap, WrapItem, TagLabel, Tag, InputGroup, Input, ButtonGroup, IconButton, HStack, InputRightElement, Modal } from '@chakra-ui/react'
+import { Grid, GridItem } from '@chakra-ui/react'
+import { useSelector, useDispatch } from "react-redux";
+import { BsSearch } from 'react-icons/bs'
+import { AiOutlineClose, AiOutlinePlus } from "react-icons/ai";
+import { FaTrashAlt } from 'react-icons/fa'
+import { MdRestore } from "react-icons/md"
+
+
+// custom files import
+import CommonLoader from "../../shared/components/commonLoader";
+import CommonPagination from "../../shared/components/Pagination/commonPagination";
+import { postMethod, deleteMethod, putMethod } from "../../redux/HttpRouting/httpRoutingRedux";
+import { updateSelectedPage } from "../../redux/commonSlice";
+import { API } from "../../shared/API";
+import { resetRestoredProductList, updateRestoredProductLoader, updateRestoredProductList } from "../../redux/restoredProductSlice";
+import { darkTheme, lightTheme } from "../../shared/theme";
+import CommonService from "../../shared/commonService/commonService";
+import { config } from "../../environment";
+import { Confirmation } from "../../shared/components/confirmation";
+
+const RestoredProductList = (props) => {
+
+    //Variable to hold shop image
+    const shopImage = require('../../assets/images/shopImage.png')
+
+    // single media query with no options
+    const [isLargerThan900] = useMediaQuery('(min-width: 900px)')
+    const [isLargerThan700] = useMediaQuery('(min-width: 600px)')
+
+    //Handling appcolors based on color mode
+    const [appColors, setAppColors] = useState(lightTheme)
+
+    //Variable to handle modal ref
+    const modalRef = useRef();
+
+    //Variable to handle modal ref
+    const restoreModal = useRef();
+
+    //Variable used to navigate between screens
+    const navigation = useNavigate()
+
+    //Variable to handle redux dispatch
+    const dispatch = useDispatch()
+
+    //Variable used to show toast snackbar
+    const toast = useToast();
+
+    //Variable to handle dialog state
+    const [isDeleteDialog, setDeleteDialog] = useState(false);
+
+    //Variable to handle dialog state
+    const [isRestoreDialog, setRestoreDialog] = useState(false);
+
+    //Variable used to get productlist states from redux
+    const restoredProductsReducer = useSelector(state => state.restoredProducts)
+
+    //Variable used to get productlist states from redux
+    const commonReducer = useSelector(state => state.commonReducer)
+
+    //Variable to handle selected products
+    const [selectedProduct, setSelectedProduct] = useState()
+
+    //Variable to handle pagination
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+
+    //Variable to handle logout confirmation dialog props
+    const deleteDialogProps = {
+        title: 'Delete Confirmation',
+        description: 'Are you sure you want to delete this product permanently?',
+        buttons: [
+            {
+                id: 1,
+                buttonTitle: 'No',
+                confirmation: 'No'
+            },
+            {
+                id: 2,
+                buttonTitle: 'Yes',
+                confirmation: 'Yes',
+                bg: appColors.primary,
+                titleColor: appColors.light
+            }
+        ]
+    }
+
+    //Variable to handle logout confirmation dialog props
+    const restoreDialogProps = {
+        title: 'Restore Confirmation',
+        description: 'Are you sure you want to restore this product?',
+        buttons: [
+            {
+                id: 1,
+                buttonTitle: 'No',
+                confirmation: 'No'
+            },
+            {
+                id: 2,
+                buttonTitle: 'Yes',
+                confirmation: 'Yes',
+                bg: appColors.primary,
+                titleColor: appColors.light
+            }
+        ]
+    }
+
+    //Function to be called while clicking restore button
+    const onRestorePress = (item) => {
+        setRestoreDialog(true)
+        setSelectedProduct(item)
+    }
+
+    //Function to be called while clicking delete button
+    const onDeletePress = (item) => {
+        setDeleteDialog(true);
+        setSelectedProduct(item)
+    }
+
+    //Function to be called while responding to confimration
+    const confirmation = (action) => {
+        if (isDeleteDialog) {
+            setDeleteDialog(false);
+            if (action === 'Yes') {
+                dispatch(updateRestoredProductLoader())
+                dispatch(resetRestoredProductList())
+                dispatch(deleteMethod({
+                    url: API.DELETE_PRODUCT_PERMANENTLY,
+                    queryParams: {
+                        deleteId: selectedProduct._id
+                    }
+                })).unwrap().then((res) => {
+                    setSelectedProduct();
+                    getRestoredProducts({ offset: 0 });
+                    setPage(0);
+                    toast({
+                        title: 'Product deleted successfully',
+                        status: 'success',
+                        duration: 2000,
+                        isClosable: true,
+                    })
+                }).catch((err) => {
+                    getRestoredProducts({ offset: 0 });
+                    setPage(0);
+                    toast({
+                        title: 'Failed to delete product',
+                        status: 'error',
+                        duration: 2000,
+                        isClosable: true,
+                    })
+                })
+            }
+        }
+        else if (isRestoreDialog) {
+            setRestoreDialog(false)
+            if (action === 'Yes') {
+                dispatch(updateRestoredProductLoader());
+                dispatch(resetRestoredProductList())
+                dispatch(putMethod({
+                    url: API.RESTORE_PRODUCT,
+                    queryParams: {
+                        'productId': selectedProduct._id
+                    }
+                })).unwrap().then((res) => {
+                    setSelectedProduct();
+                    getRestoredProducts({ offset: 0 });
+                    setPage(0);
+                    toast({
+                        title: 'Product restored successfully',
+                        status: 'success',
+                        duration: 2000,
+                        isClosable: true,
+                    })
+                }).catch((err) => {
+                    getRestoredProducts({ offset: 0 });
+                    setPage(0);
+                    toast({
+                        title: 'Failed to restore product',
+                        status: 'error',
+                        duration: 2000,
+                        isClosable: true,
+                    })
+                })
+            }
+        }
+    }
+
+    //Function handle pageination changes
+    const handleChangePage = (newPage) => {
+        setPage(newPage);
+        dispatch(resetRestoredProductList())
+        getRestoredProducts({ offset: newPage })
+    };
+
+    //Function to handle pagination row changes
+    const handleChangeRowsPerPage = (newRow) => {
+        dispatch(resetRestoredProductList())
+        setRowsPerPage(newRow);
+        getRestoredProducts({ offset: 0, limit: newRow })
+        setPage(0);
+    };
+
+    //Price formatter
+    const priceFormatter = useCallback((price) => {
+        const formattedPrice = CommonService.priceFormatter(price)
+        return formattedPrice
+    }, [])
+
+    //Function to set product list data in reducer
+    const getRestoredProducts = ({ offset = null, limit = null, clearSearch = false }) => {
+        dispatch(postMethod({
+            url: API.GET_ALL_PRODUCTS,
+            data: {
+                offset: offset !== null ? offset * rowsPerPage : page * rowsPerPage,
+                limit: limit !== null ? limit : rowsPerPage,
+                search: clearSearch ? '' : search,
+                isDeleted: true
+            }
+        })).unwrap().then((res) => {
+            dispatch(updateRestoredProductList(res))
+        }).catch((err) => {
+            toast({
+                title: 'Failed to fetch data',
+                status: 'warning',
+                duration: 2000,
+                isClosable: true,
+            })
+        })
+    }
+
+    //Template to render list of products
+    const RenderItems = () => {
+        return (
+            <Box mt={10} ml={5} mr={5}>
+
+                <Grid templateColumns={isLargerThan900 ? 'repeat(3, 1fr)' : isLargerThan700 ? 'repeat(2, 1fr)' : 'repeat(1, 1fr)'} gap={6} >
+                    {restoredProductsReducer?.data?.map((item, index) => {
+                        return <GridItem display={'flex'} flex={1} flexDirection={'row'} boxShadow={'xl'} borderWidth={'1px'} borderRadius={7} key={index}>
+                            <Image
+                                alt="loading"
+                                src={shopImage}
+                                h={250}
+                                minW={200}
+                                p={2}
+                                mr={5}
+                                display='flex'
+                                flex={0.2}
+                            />
+                            <Box display='flex' flex={0.8} flexDirection='column' pt={3}>
+                                <HStack display='flex' minW={'100%'} justifyContent={'space-between'} pr={5}>
+                                    <Text
+                                        fontSize={'lg'}
+                                        fontWeight='medium'
+                                        fontFamily={config.fontFamily}
+                                        key={index}
+                                        display={'flex'}
+                                        flexWrap={'wrap'}
+                                        // maxW={170}
+                                        color={appColors.textColor}>
+                                        {item?.productName?.length > 20 ? item?.productName?.slice(0, 15) : item?.productName}
+                                    </Text>
+
+                                    <ButtonGroup spacing={2}>
+                                        <IconButton borderRadius={'full'} onClick={() => { onRestorePress(item) }} bg={appColors.lightOrange}>
+                                            <MdRestore />
+                                        </IconButton>
+                                        <IconButton borderRadius={'full'} bg={appColors.lightRed} onClick={() => { onDeletePress(item) }}>
+                                            <FaTrashAlt />
+                                        </IconButton>
+                                    </ButtonGroup>
+                                </HStack>
+
+                                {/* <Box display={'flex'} flexDirection={'column'}> */}
+                                <Wrap alignItems={'flex-start'} mt={5}>
+                                    <WrapItem>
+                                        <Badge colorScheme='green' pl={2} pr={2} pt={1} pb={1} mb={2} mr={2} fontFamily={config.fontFamily} borderRadius={7}>
+                                            {item?.brandName}
+                                        </Badge>
+                                    </WrapItem>
+                                    <WrapItem>
+                                        <Badge colorScheme={'purple'} pl={2} pr={2} pt={1} pb={1} fontFamily={config.fontFamily} borderRadius={7} >
+                                            {item?.productType}
+                                        </Badge>
+                                    </WrapItem>
+                                </Wrap>
+                                {/* </Box> */}
+
+                                {
+                                    item?.labelArray?.length ? <Wrap mt={3} mb={3}>
+                                        {item?.labelArray?.map((item, labelIndex) => {
+                                            return <WrapItem key={labelIndex}>
+                                                <Tag
+                                                    size={'md'}
+                                                    fontFamily={config.fontFamily}
+                                                    borderRadius='full'
+                                                    variant='solid'
+                                                    colorScheme={'green'}
+                                                >
+                                                    <TagLabel>{item}</TagLabel>
+                                                </Tag>
+                                            </WrapItem>
+                                        })}
+                                    </Wrap> : null
+                                }
+
+
+                                <VStack mb={5} mr={5}>
+                                    <Badge
+                                        fontSize={'xs'}
+                                        variant='outline'
+                                        p={2}
+                                        mt={5}
+                                        mb={2}
+                                        w={'100%'}
+                                        textAlign='center'
+                                        fontFamily={config.fontFamily}
+                                        fontWeight={'semibold'}
+                                        colorScheme='green'
+                                    >
+                                        Sales Price : ₹{priceFormatter(item?.salesPrice)}
+                                    </Badge>
+
+                                    <Badge
+                                        fontSize={'xs'}
+                                        variant='outline'
+                                        p={2}
+                                        w={'100%'}
+                                        mb={5}
+                                        textAlign='center'
+                                        fontFamily={config.fontFamily}
+                                        fontWeight={'semibold'}
+                                        colorScheme='green'>
+                                        Product Stock : {item?.stock} {item?.weightUnit}
+                                    </Badge>
+                                </VStack>
+
+                            </Box>
+                        </GridItem>
+                    })}
+                </Grid>
+
+                {/* <CommonPagination
+                    count={restoredProductsReducer?.totalCount}
+                    page={page}
+                    rowsPerPage={rowsPerPage}
+                    handleChangePage={handleChangePage}
+                    handleChangeRowsPerPage={handleChangeRowsPerPage}
+                /> */}
+            </Box>
+        )
+    }
+
+    //UseEffect to be called initially
+    useEffect(() => {
+        dispatch(resetRestoredProductList());
+        dispatch(updateSelectedPage({
+            menuTitle: 'Products',
+            submenuTitle: 'Restore Products'
+        }))
+        getRestoredProducts({ offset: 0 })
+    }, [])
+
+    const [search, setSearch] = useState('');
+
+    //UseEffect to be called while changing search value
+    useEffect(() => {
+        if (search) {
+            setTimeout(() => {
+                dispatch(resetRestoredProductList())
+                getRestoredProducts({ offset: 0 });
+                // setPage(0);
+            }, 2000)
+        }
+    }, [search])
+
+    //Function to be called while clearing search
+    const onClearSearch = () => {
+        setSearch('')
+        dispatch(resetRestoredProductList())
+        getRestoredProducts({ offset: 0, clearSearch: true });
+        // setPage(0);
+    }
+
+    // UseEffect to update theme
+    useEffect(() => {
+        if (commonReducer.appTheme === 'light') {
+            setAppColors(lightTheme)
+        }
+        else {
+            setAppColors(darkTheme)
+        }
+    }, [commonReducer.appTheme])
+
+
+    return (
+        <Box>
+
+            {/* Search bar View */}
+            <HStack m={10} justifyContent={'space-between'}>
+                <InputGroup maxW={'80%'} borderRadius={'full'}>
+                    <Input
+                        fontFamily={config.fontFamily}
+                        boxShadow={'md'}
+                        value={search}
+                        onChange={(event) => {
+                            if (event.target.value === '') {
+                                onClearSearch()
+                            }
+                            else {
+                                setSearch(event.target.value)
+                            }
+                        }}
+                        placeholder={'Search by product name'}
+                    />
+                    <InputRightElement pr={search ? 10 : 0}>
+                        <ButtonGroup>
+                            {
+                                search ?
+                                    <IconButton borderRadius={'none'} bg={'none'} onClick={() => onClearSearch()}>
+                                        <AiOutlineClose />
+                                    </IconButton> : null
+                            }
+                            <IconButton borderRadius={'none'} bg={'none'}>
+                                <BsSearch />
+                            </IconButton>
+                        </ButtonGroup>
+                    </InputRightElement>
+                </InputGroup>
+                <Button
+                    fontFamily={config.fontFamily}
+                    leftIcon={<AiOutlinePlus color={appColors.light} strokeWidth={'50px'} />}
+                    bg={appColors.primary}
+                    color={appColors.light}
+                    onClick={() => {
+                        navigation('/addProduct', { replace: true })
+                    }}
+                >
+                    {isLargerThan900 ? 'Add Product' : 'Add'}
+                </Button>
+            </HStack>
+
+            {restoredProductsReducer.status === 'loading' ?
+                <CommonLoader /> :
+                restoredProductsReducer?.data?.length ?
+                    <Box minH={'100vh'} mb={100}>
+                        <RenderItems />
+                        <CommonPagination
+                            count={restoredProductsReducer?.totalCount}
+                            page={page}
+                            rowsPerPage={rowsPerPage}
+                            handleChangePage={handleChangePage}
+                            handleChangeRowsPerPage={handleChangeRowsPerPage}
+                        />
+                    </Box>
+                    :
+                    <Center h={'70vh'} >
+                        <Text fontFamily={config.fontFamily} fontSize='2xl' fontWeight={'semibold'}>
+                            No products found
+                        </Text>
+                    </Center>
+            }
+
+
+            {/* Delete product confirmation */}
+            <Modal finalFocusRef={modalRef} isOpen={isDeleteDialog}>
+                <Confirmation isOpen={isDeleteDialog} dialogProps={deleteDialogProps} confirmation={confirmation} />
+            </Modal>
+
+            {/* Restore product confirmation */}
+            <Modal finalFocusRef={restoreModal} isOpen={isRestoreDialog}>
+                <Confirmation isOpen={isRestoreDialog} dialogProps={restoreDialogProps} confirmation={confirmation} />
+            </Modal>
+
+        </Box>
+    );
+}
+
+export default RestoredProductList;
