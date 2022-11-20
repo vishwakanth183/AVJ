@@ -83,6 +83,7 @@ const InvestmentList = (props) => {
 
     //Function to be called while clearing search
     const onClearSearch = () => {
+        setPage(0)
         setSearch('')
         dispatch(resetInvestmentList())
         getInvestmentListData({ offset: 0, clearSearch: true })
@@ -147,6 +148,7 @@ const InvestmentList = (props) => {
     useEffect(() => {
         const searchDebounceFunction = setTimeout(() => {
             if (search) {
+                setPage(0)
                 dispatch(resetInvestmentList())
                 getInvestmentListData({ offset: 0 })
             }
@@ -371,7 +373,7 @@ const InvestmentList = (props) => {
 
                         </Box>
                         :
-                        <Center h={'70vh'} >
+                        <Center h={'50vh'} >
                             <Text fontFamily={config.fontFamily} fontSize='2xl' fontWeight={'semibold'}>
                                 No investment found
                             </Text>

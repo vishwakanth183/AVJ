@@ -25,7 +25,7 @@ export const drawerMenu = [
         submenu: [
             {
                 submenuTitle: 'Orders',
-                linkto: '/orders'
+                linkto: '/orderList'
             },
             {
                 submenuTitle: 'LineBusiness',

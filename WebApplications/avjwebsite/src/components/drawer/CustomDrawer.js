@@ -39,16 +39,18 @@ import AuthorizationError from './authourizationAlert';
 import Signin from '../auth/signin';
 import Dashboard from '../dashboard/dashboard';
 import ProductList from '../products/productList';
-import RestoredProductList from '../products/restoreProducts';
-import AddEditProducts from '../products/addEditProducts/addEditProducts'
+import RestoredProductList from '../products/restoreproductsList';
+import AddEditProducts from '../products/addEditProducts/addEditProducts';
 import FamilyExpenseList from '../expenses/familyExpense/familyExpenseList';
-import AddEditFamilyExpense from '../expenses/familyExpense/addEditFamilyExpense'
+import AddEditFamilyExpense from '../expenses/familyExpense/addEditFamilyExpense';
 import BorrowedList from '../expenses/borrowed/borrowedList';
 import AddEditBorrowed from '../expenses/borrowed/addEditBorrowed'
 import InvestmentList from '../expenses/investment/investmentList';
-import AddEditInvestment from '../expenses/investment/addEditInvestment'
-import LineBusinessList from '../revenue/lineBusiness/lineBusiness';
-import AddEditLineBusiness from '../revenue/lineBusiness/addEditLineBusiness'
+import AddEditInvestment from '../expenses/investment/addEditInvestment';
+import LineBusinessList from '../revenue/lineBusiness/linebusinessList';
+import AddEditLineBusiness from '../revenue/lineBusiness/addEditLineBusiness';
+import OrderList from '../revenue/orders/orderList';
+import AddEditManualOrder from '../revenue/orders/manualOrder/stepper'
 
 const CustomDrawer = () => {
 
@@ -329,6 +331,8 @@ const CustomDrawer = () => {
                     <Route path='/addEditInvestment' element={<AddEditInvestment />} />
                     <Route path='/lineBusinessList' element={<LineBusinessList />} />
                     <Route path='/addEditLineBusiness' element={<AddEditLineBusiness />} />
+                    <Route path='/orderList' element={<OrderList />} />
+                    <Route path='/addEditManualOrder' element={<AddEditManualOrder/>} />
                 </Routes>
 
             </Box>

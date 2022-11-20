@@ -2,8 +2,16 @@
 class commonService {
 
     // Price formatter
-    priceFormatter = (price) => {
-        return new Intl.NumberFormat('en-In', { minimumFractionDigits: 2 }).format(price)
+    priceFormatter = (price , round = false) => {
+        const formattedPrice = new Intl.NumberFormat('en-In', { minimumFractionDigits: 2 }).format(price)
+        if(!round)
+        {
+            return formattedPrice
+        }
+        else
+        {
+            return Math.round(formattedPrice)
+        }
     }
 
     // Progress loader value

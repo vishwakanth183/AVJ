@@ -26,16 +26,16 @@ import { useSelector, useDispatch } from "react-redux";
 import { config } from '../../../environment';
 import { API } from '../../../shared/API';
 import { lightTheme, darkTheme } from '../../../shared/theme';
-import { resetLineBusinessList, updateLineBusinessList, updateLineBusinessLoader } from '../../../redux/lineBusinessSlice'
+import { resetManualOrderList , updateManualOrder , updateManualOrderLoader } from '../../../redux/manualOrderSlice'
 import CommonLoader from '../../../shared/components/commonLoader';
 import { postMethod } from '../../../redux/HttpRouting/httpRoutingRedux';
 import CommonService from '../../../shared/commonService/commonService';
 import CommonPagination from '../../../shared/components/Pagination/commonPagination';
 
-const LineBusinessList = (props) => {
+const OrderList = (props) => {
 
     //Variable to handle list titles
-    const listTitle = ['Buyed From', 'Sold to', 'Purchase Value', 'Sold Value', 'Paid Amount' , 'Travel Expenses', 'Profit', 'Progress', 'Edit']
+    const listTitle = ['Order no', 'Purchase Amount', 'Order Amount', 'Profit', 'Paid Amount' , 'Progress', 'Edit']
 
     //Variable used to get productlist states from redux
     const commonReducer = useSelector(state => state.commonReducer)
@@ -47,8 +47,8 @@ const LineBusinessList = (props) => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    //Variable to maintain lineBusiness redux value
-    const lineBusiness = useSelector(state => state.lineBusiness)
+    //Variable to maintain manualOrder redux value
+    const manualOrder = useSelector(state => state.manualOrder)
 
     // Variabe to handle tab navigation
     const [value, setValue] = useState(0)
@@ -74,8 +74,7 @@ const LineBusinessList = (props) => {
 
     // Progress Loader Value
     const progressLoaderValue = useCallback((value) => {
-        // console.log('linebusiness item',value.finalPrice , value.paidAmount)
-        const progressValue = CommonService.progressLoader({ totalAmount: value.soldValue, amountPaid: value.paidAmount })
+        const progressValue = CommonService.progressLoader({ totalAmount: value.orderAmount, amountPaid: value.paidAmount })
         return progressValue
     }, [])
 
@@ -83,48 +82,47 @@ const LineBusinessList = (props) => {
 
     //Function to be called while clearing search
     const onClearSearch = () => {
+        setPage(0);
         setSearch('')
-        dispatch(resetLineBusinessList())
-        getLineBusinessList({ offset: 0, clearSearch: true })
+        dispatch(resetManualOrderList())
+        getAllManualOrder({ offset: 0, clearSearch: true })
     }
 
     //Function to handle pagination row changes
     const handleChangeRowsPerPage = (newRow) => {
-        dispatch(resetLineBusinessList())
+        dispatch(resetManualOrderList())
         setRowsPerPage(newRow);
-        getLineBusinessList({ offset: 0, limit: newRow })
+        getAllManualOrder({ offset: 0, limit: newRow })
         setPage(0);
     };
 
     //Function handle pageination changes
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
-        dispatch(resetLineBusinessList())
-        getLineBusinessList({ offset: newPage })
+        dispatch(resetManualOrderList())
+        getAllManualOrder({ offset: newPage })
     };
 
-    //Function to set product list data in reducer
-    const getLineBusinessList = ({ offset = null, limit = null, clearSearch = false }) => {
+    //Function to set manualorder list data in reducer
+    const getAllManualOrder = ({ offset = null, limit = null, currentPaymentStatus = null }) => {
         dispatch(postMethod({
-            url: API.GET_ALL_LINEBUSINESS,
+            url: API.GET_ALL_MANUAL_ORDER,
             data: {
+                paymentStatus: (currentPaymentStatus != null ? currentPaymentStatus : value) === 0 ? 'Pending' : 'Paid',
                 offset: offset !== null ? offset * rowsPerPage : page * rowsPerPage,
-                limit: limit !== null ? limit : rowsPerPage,
-                search: clearSearch ? '' : search,
-                paymentStatus: value === 0 ? 'Pending' : 'Paid',
+                limit: limit !== null ? limit : rowsPerPage
             }
         })).unwrap().then((res) => {
-            console.log("ressss", res)
-            dispatch(updateLineBusinessList(res));
+            dispatch(updateManualOrder(res))
         }).catch((err) => {
-            console.log('linebusiness list error', err.message)
+            console.log('Manual Order Error', err.message)
         })
     }
 
     //Function to called while clicking edit icon
     const onEditClicked = (id) => {
-        dispatch(resetLineBusinessList())
-        navigation('/addEditLineBusiness', { replace: true, state: { linebusinessId: id } });
+        dispatch(resetManualOrderList())
+        navigation('/addEditManualOrder', { replace: true, state: { orderId: id } });
     }
 
     // UseEffect to update theme
@@ -137,18 +135,19 @@ const LineBusinessList = (props) => {
         }
     }, [commonReducer.appTheme])
 
-    //useEffect to get lineBusiness list
+    //useEffect to get manualorder list
     useEffect(() => {
-        dispatch(resetLineBusinessList())
-        getLineBusinessList({ offset: 0 })
+        dispatch(resetManualOrderList())
+        getAllManualOrder({ offset: 0 })
     }, [value])
 
     //UseEffect which will be called while searching a particular product
     useEffect(() => {
         const searchDebounceFunction = setTimeout(() => {
             if (search) {
-                dispatch(resetLineBusinessList())
-                getLineBusinessList({ offset: 0 })
+                setPage(0);
+                dispatch(resetManualOrderList())
+                getAllManualOrder({ offset: 0 })
             }
         }, 1000)
         return () => clearTimeout(searchDebounceFunction)
@@ -161,7 +160,7 @@ const LineBusinessList = (props) => {
 
             <Box display={'flex'} flexDirection={'row'} mt={5} mb={5}>
                 <Text fontSize={'4xl'} fontFamily={config.fontFamily} pl={5} fontWeight={'semibold'}>
-                    LineBusiness
+                    OrderList
                 </Text>
             </Box>
 
@@ -240,7 +239,7 @@ const LineBusinessList = (props) => {
                                 setSearch(event.target.value)
                             }
                         }}
-                        placeholder={'Search by buyed shop name'}
+                        placeholder={'Search by order number'}
                     />
                     <InputRightElement pr={search ? 10 : 0}>
                         <ButtonGroup>
@@ -262,25 +261,25 @@ const LineBusinessList = (props) => {
                     bg={appColors.primary}
                     color={appColors.light}
                     onClick={() => {
-                        navigation('/addEditLineBusiness', { replace: true })
+                        navigation('/addEditManualOrder', { replace: true })
                     }}
                 >
-                    {isLargerThan900 ? 'Add LineBusiness' : 'Add'}
+                    {isLargerThan900 ? 'Add ManualOrder' : 'Add'}
                 </Button>
             </HStack>
 
             {/* List View */}
             {
-                lineBusiness?.status === 'loading' ?
+                manualOrder?.status === 'loading' ?
                     <CommonLoader h='50vh' />
                     :
-                    lineBusiness?.data?.length ?
+                    manualOrder?.data?.length ?
                         <Box>
 
                             {/* Rendering list */}
                             <TableContainer>
                                 <Table colorScheme='blackAlpha'>
-                                    <TableCaption fontFamily={config.fontFamily} fontSize={'md'}>LineBusiness</TableCaption>
+                                    {/* <TableCaption fontFamily={config.fontFamily} fontSize={'md'}>ManualOrder</TableCaption> */}
 
                                     {/* Header View */}
                                     <Thead bg={appColors.dark}>
@@ -299,8 +298,8 @@ const LineBusinessList = (props) => {
                                         </Tr>
                                     </Thead>
 
-                                    {/* LineBusiness List View */}
-                                    {lineBusiness?.data?.map((item, index) => {
+                                    {/* Manual Order List View */}
+                                    {/* {manualOrder?.data?.map((item, index) => {
                                         return <Tbody>
                                             <Tr>
                                                 <Td fontFamily={config.fontFamily}>
@@ -348,30 +347,16 @@ const LineBusinessList = (props) => {
                                                         <FaPencilAlt />
                                                     </IconButton>
                                                 </Td>
-                                                {/* <Td fontFamily={config.fontFamily}>
-                                                    <IconButton borderRadius={'full'} bg={'none'} onClick={() => {
-                                                        if (selectedIndex === expenseIndex) {
-                                                            setSelectIndex(null)
-                                                        }
-                                                        else {
-                                                            setSelectIndex(expenseIndex)
-                                                        }
-                                                    }}>
-                                                        {selectedIndex != null && selectedIndex === expenseIndex ?
-                                                            <FaChevronUp /> :
-                                                            <FaChevronDown />}
-                                                    </IconButton>
-                                                </Td> */}
                                             </Tr>
                                         </Tbody>
-                                    })}
+                                    })} */}
 
                                 </Table>
                             </TableContainer>
 
                             {/* Pagination */}
                             <CommonPagination
-                                count={lineBusiness?.totalCount}
+                                count={manualOrder?.totalCount}
                                 page={page}
                                 rowsPerPage={rowsPerPage}
                                 handleChangePage={handleChangePage}
@@ -380,9 +365,9 @@ const LineBusinessList = (props) => {
 
                         </Box>
                         :
-                        <Center h={'70vh'} >
+                        <Center h={'50vh'} >
                             <Text fontFamily={config.fontFamily} fontSize='2xl' fontWeight={'semibold'}>
-                                No lineBusiness records found
+                                No orders found
                             </Text>
                         </Center>
             }
@@ -392,4 +377,4 @@ const LineBusinessList = (props) => {
     );
 }
 
-export default LineBusinessList;
+export default OrderList;

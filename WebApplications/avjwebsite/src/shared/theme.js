@@ -8,6 +8,9 @@ const green = "green"
 const orange = "orange"
 const gray = "gray"
 const borderColor = '#ddd'
+const solidGreen = 'green'
+const skyblue = 'skyblue'
+const blackAlpha = 'blackAlpha.100'
 
 const lightBlack = 'black.100'
 const lightTeal = 'teal.100'
@@ -45,7 +48,10 @@ export const darkTheme = {
     lightGray : lightGray,
     borderColor : borderColor,
     tabBackground : lightBlack,
-    tabTitle : tabTitle
+    tabTitle : tabTitle,
+    solidGreen : solidGreen,
+    skyblue : skyblue,
+    blackAlpha : blackAlpha
 }
 
 export const lightTheme = {
@@ -72,5 +78,8 @@ export const lightTheme = {
     lightGray : lightGray,
     borderColor : borderColor,
     tabBackground : tabBackground,
-    tabTitle : white
+    tabTitle : white,
+    solidGreen : solidGreen,
+    skyblue : skyblue,
+    blackAlpha : blackAlpha
 }

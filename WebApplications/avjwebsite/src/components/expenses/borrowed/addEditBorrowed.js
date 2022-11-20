@@ -6,8 +6,9 @@ import * as Yup from 'yup'
 import {
     Box, useMediaQuery, useToast, Button, HStack, FormLabel, Text, FormControl, SimpleGrid, Textarea
 } from '@chakra-ui/react';
-import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { BiLeftArrowAlt } from 'react-icons/bi'
+
+// Custom imports
 import { API } from '../../../shared/API';
 import { postMethod, putMethod } from '../../../redux/HttpRouting/httpRoutingRedux';
 import CommonLoader from '../../../shared/components/commonLoader';

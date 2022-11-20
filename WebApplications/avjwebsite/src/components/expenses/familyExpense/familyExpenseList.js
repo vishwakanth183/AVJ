@@ -9,11 +9,12 @@ import {
     Th,
     Td,
     TableCaption,
-    TableContainer, useMediaQuery
+    TableContainer, useMediaQuery, InputGroup, Input, ButtonGroup, InputRightElement,
 } from '@chakra-ui/react'
-import { AiOutlinePlus } from 'react-icons/ai';
+import { AiOutlinePlus, AiOutlineClose } from 'react-icons/ai';
 import { FaChevronDown, FaChevronUp, FaPencilAlt } from 'react-icons/fa';
 import { useSelector, useDispatch } from "react-redux";
+import { BsSearch } from 'react-icons/bs'
 
 // Custom imports
 import { config } from '../../../environment';
@@ -32,6 +33,9 @@ const FamilyExpenseList = (props) => {
 
     //Variable to maintain familyExpense redux value
     const familyExpense = useSelector(state => state.familyExpense)
+
+    // Variable to handle search
+    const [search, setSearch] = useState('');
 
     //Variable to handle redux dispatch
     const dispatch = useDispatch()
@@ -73,12 +77,13 @@ const FamilyExpenseList = (props) => {
     };
 
     //Function to set product list data in reducer
-    const getExpenseListData = ({ offset = null, limit = null }) => {
+    const getExpenseListData = ({ offset = null, limit = null, clearSearch = false }) => {
         dispatch(postMethod({
             url: API.GET_ALL_EXPENSES,
             data: {
                 offset: offset !== null ? offset * rowsPerPage : page * rowsPerPage,
-                limit: limit !== null ? limit : rowsPerPage
+                limit: limit !== null ? limit : rowsPerPage,
+                search: clearSearch ? '' : search,
             }
         })).unwrap().then((res) => {
             console.log("ressss", res)
@@ -124,6 +129,14 @@ const FamilyExpenseList = (props) => {
         navigation('/addEditFamilyExpense', { replace: true, state: { expenseId: id } });
     }
 
+    //Function to be called while clearing search
+    const onClearSearch = () => {
+        setPage(0)
+        setSearch('')
+        dispatch(resetExpenseList())
+        getExpenseListData({ offset: 0, clearSearch: true })
+    }
+
 
     // UseEffect to update theme
     useEffect(() => {
@@ -137,37 +150,83 @@ const FamilyExpenseList = (props) => {
 
     //useEffect to get expense
     useEffect(() => {
-        if (familyExpense.status === 'loading') {
-            getExpenseListData({ offset: 0 })
-        }
+        dispatch(resetExpenseList())
+        getExpenseListData({ offset: 0 })
     }, [dispatch])
+
+    //UseEffect which will be called while searching a particular product
+    useEffect(() => {
+        const searchDebounceFunction = setTimeout(() => {
+            if (search) {
+                setPage(0)
+                dispatch(resetExpenseList())
+                getExpenseListData({ offset: 0 })
+            }
+        }, 1000)
+        return () => clearTimeout(searchDebounceFunction)
+    }, [search])
 
     return (
         <Box>
+            <Box display={'flex'} flexDirection={'row'} mt={5} mb={5}>
+                <Text fontSize={'4xl'} fontFamily={config.fontFamily} pl={5} fontWeight={'semibold'}>
+                    FamilyexpenseList
+                </Text>
+            </Box>
+
+            <HStack m={10} ml={5} justifyContent={'space-between'}>
+
+                {/* Search view */}
+                <InputGroup maxW={'80%'} borderRadius={'full'}>
+                    <Input
+                        fontFamily={config.fontFamily}
+                        boxShadow={'md'}
+                        value={search}
+                        onChange={(event) => {
+                            if (event.target.value === '') {
+                                onClearSearch()
+                            }
+                            else {
+                                setSearch(event.target.value)
+                            }
+                        }}
+                        placeholder={'Search by month'}
+                    />
+                    <InputRightElement pr={search ? 10 : 0}>
+                        <ButtonGroup>
+                            {
+                                search ?
+                                    <IconButton borderRadius={'none'} bg={'none'} onClick={() => onClearSearch()}>
+                                        <AiOutlineClose />
+                                    </IconButton> : null
+                            }
+                            <IconButton borderRadius={'none'} bg={'none'}>
+                                <BsSearch />
+                            </IconButton>
+                        </ButtonGroup>
+                    </InputRightElement>
+                </InputGroup>
+
+                {/* AddExpense View */}
+                <Button
+                    leftIcon={<AiOutlinePlus color={appColors.light} strokeWidth={'50px'} />}
+                    fontFamily={config.fontFamily}
+                    bg={appColors.primary}
+                    color={appColors.light}
+                    fontSize={'md'}
+                    onClick={() => {
+                        dispatch(resetExpenseList())
+                        navigation('/addEditFamilyExpense', { replace: true })
+                    }}
+                >
+                    {'Add Expense'}
+                </Button>
+            </HStack>
+
             {familyExpense?.status === 'loading' ?
                 <CommonLoader />
                 :
                 <Box>
-                    <HStack w={'100%'} justifyContent={'space-between'} p={5} pl={0} mb={5} alignItems={'center'}>
-                        <Box display={'flex'} flexDirection={'row'}>
-                            <Text fontSize={'4xl'} fontFamily={config.fontFamily} pl={5} fontWeight={'semibold'}>
-                                Family Expense
-                            </Text>
-                        </Box>
-                        <Button
-                            leftIcon={<AiOutlinePlus color={appColors.light} strokeWidth={'50px'} />}
-                            fontFamily={config.fontFamily}
-                            bg={appColors.primary}
-                            color={appColors.light}
-                            fontSize={'md'}
-                            onClick={() => {
-                                dispatch(resetExpenseList())
-                                navigation('/addEditFamilyExpense', { replace: true })
-                            }}
-                        >
-                            {'Add Expense'}
-                        </Button>
-                    </HStack>
 
                     {!familyExpense.data.length
                         ?
@@ -180,7 +239,7 @@ const FamilyExpenseList = (props) => {
                         </Box>
                         :
                         <Box>
-                            
+
                             <TableContainer>
                                 <Table colorScheme='blackAlpha'>
                                     <TableCaption fontFamily={config.fontFamily} fontSize={'md'}>Family Expenses from 2022</TableCaption>

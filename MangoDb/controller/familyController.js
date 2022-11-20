@@ -12,19 +12,24 @@ const createExpense = async (req, res) => {
         'totalExpense': req.body.totalExpense
     }
 
-    await Family.create({
-        month: expenseData.month,
-        year: expenseData.year,
-        totalExpense: expenseData.totalExpense
-    }).then(() => {
-        res.status(statusCodes.success).json('Expense created successfully')
-    }).catch((error) => {
-        console.log('error', error)
-        if (error.code === 11000) {
-            res.status(11000).json("Duplicate expense ! Can't add a expense with same name more than once")
+
+    Family.findOne({
+        month: req.body.month,
+        year: req.body.year
+    }).then(async(data) => {
+        if (!data) {
+            await Family.create({
+                month: expenseData.month,
+                year: expenseData.year,
+                totalExpense: expenseData.totalExpense
+            }).then(() => {
+                res.status(statusCodes.success).json('Expense created successfully')
+            }).catch((error) => {
+                    res.status(statusCodes.unprocessableEntity).json('Something wrong happened in creating expense! Try Again!')
+            })
         }
         else {
-            res.status(statusCodes.unprocessableEntity).json('Something wrong happened in creating expense! Try Again!')
+            res.status(statusCodes.unprocessableEntity).json("Duplicate expense ! Can't add an expense with same month and same year more than once")
         }
     })
 }
@@ -45,7 +50,7 @@ module.exports.getSingleExpenseDetails = getSingleExpenseDetails
 //Function to get all Expense based on expense month
 const getAllExpense = async (req, res) => {
 
-    const search = new RegExp('')
+    const search = new RegExp(req.body.search)
     const offset = req.body.offset ? req.body.offset : 0
     const limit = req.body.limit ? req.body.limit : 100
 

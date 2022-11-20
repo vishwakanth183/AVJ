@@ -39,22 +39,6 @@ const ProductSlice = createSlice({
             }
         },
 
-        updateProductDescription: {
-            reducer(state, action) {
-                // console.log('action.payload', action.payload)
-                let cartProducts = state.selectedProducts;
-                cartProducts.map((item) => {
-                    if (item._id === action.payload.id) {
-                        // console.log('Yup found')
-                        item.description = action.payload.description
-                    }
-                    return null
-                })
-                // console.log('cartProducts After opertaion', current(cartProducts))
-                state.selectedProducts = cartProducts
-            }
-        },
-
         updateProductQuantity: {
             reducer(state, action) {
                 let cartProducts = state.selectedProducts;
@@ -124,8 +108,7 @@ const ProductSlice = createSlice({
 
 export const {
     updateProductList, updateLoader,
-    resetProductList, updateSelectedProduct,
-    updateProductDescription, updateProductQuantity,
+    resetProductList, updateSelectedProduct, updateProductQuantity,
     updateOrderSalesPrice, updateOrderTaxPrice,
     resetManualOrder , updateOrderedProducts
 } = ProductSlice.actions

@@ -364,12 +364,13 @@ const RestoredProductList = (props) => {
         }))
         getRestoredProducts({ offset: 0 })
     }, [])
-    
+
 
     //UseEffect which will be called while searching a particular product
     useEffect(() => {
         const searchDebounceFunction = setTimeout(() => {
             if (search) {
+                setPage(0)
                 dispatch(resetRestoredProductList())
                 getRestoredProducts({ offset: 0 });
             }
@@ -379,10 +380,10 @@ const RestoredProductList = (props) => {
 
     //Function to be called while clearing search
     const onClearSearch = () => {
+        setPage(0);
         setSearch('')
         dispatch(resetRestoredProductList())
         getRestoredProducts({ offset: 0, clearSearch: true });
-        // setPage(0);
     }
 
     // UseEffect to update theme
@@ -399,8 +400,15 @@ const RestoredProductList = (props) => {
     return (
         <Box>
 
+            <Box display={'flex'} flexDirection={'row'} mt={5} mb={5}>
+                <Text fontSize={'4xl'} fontFamily={config.fontFamily} pl={5} fontWeight={'semibold'}>
+                    RestoreProductsList
+                </Text>
+            </Box>
+
+
             {/* Search bar View */}
-            <HStack m={10} justifyContent={'space-between'}>
+            <HStack m={10} ml={5} justifyContent={'space-between'}>
                 <InputGroup maxW={'80%'} borderRadius={'full'}>
                     <Input
                         fontFamily={config.fontFamily}

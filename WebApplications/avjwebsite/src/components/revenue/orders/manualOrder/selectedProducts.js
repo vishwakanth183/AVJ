@@ -1,32 +1,25 @@
-import React, { useEffect, useCallback, useState, useRef } from "react";
-import { useNavigate, useLocation } from 'react-router-dom'
-import { Box, Button, Center, Text, useToast, Image, Badge, useMediaQuery, VStack, Wrap, WrapItem, TagLabel, Tag, InputGroup, Modal, Input, ButtonGroup, IconButton, HStack, InputRightElement } from '@chakra-ui/react'
-import { Grid, GridItem } from '@chakra-ui/react'
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { Box, useToast, HStack, InputGroup, Input, InputRightElement, ButtonGroup, IconButton, Button, Center, Grid, Badge, Tag, useMediaQuery, GridItem, Image, Wrap, WrapItem, TagLabel, VStack, Text, Modal } from '@chakra-ui/react';
+import { AiOutlineClose } from "react-icons/ai";
+import { GoVerified, GoPlus, GoX } from 'react-icons/go';
 import { useSelector, useDispatch } from "react-redux";
 import { BsSearch } from 'react-icons/bs'
-import { AiOutlineClose, AiOutlinePlus } from "react-icons/ai";
-import { FaTrashAlt, FaPencilAlt } from 'react-icons/fa'
 
-// custom files import
-import CommonLoader from "../../shared/components/commonLoader";
-import CommonPagination from "../../shared/components/Pagination/commonPagination";
-import { postMethod, deleteMethod } from "../../redux/HttpRouting/httpRoutingRedux";
-import { updateSelectedPage } from "../../redux/commonSlice";
-import { API } from "../../shared/API";
-import { resetProductList, updateLoader, updateProductList } from "../../redux/productSlice";
-import { darkTheme, lightTheme } from "../../shared/theme";
-import CommonService from "../../shared/commonService/commonService";
-import { config } from "../../environment";
-import { Confirmation } from "../../shared/components/confirmation";
+// Custom imports
+import { API } from '../../../../shared/API';
+import { config } from '../../../../environment';
+import { lightTheme, darkTheme } from '../../../../shared/theme';
+import { resetProductList, updateProductList, updateSelectedProduct } from "../../../../redux/productSlice";
+import CommonService from '../../../../shared/commonService/commonService';
+import CommonLoader from '../../../../shared/components/commonLoader';
+import CommonPagination from '../../../../shared/components/Pagination/commonPagination';
+import { postMethod } from '../../../../redux/HttpRouting/httpRoutingRedux';
+import { Confirmation } from '../../../../shared/components/confirmation';
 
-const ProductList = (props) => {
+const SelectedProducts = (props) => {
 
     //Variable to hold shop image
-    const shopImage = require('../../assets/images/shopImage.png')
-
-    // single media query with no options
-    const [isLargerThan900] = useMediaQuery('(min-width: 900px)')
-    const [isLargerThan700] = useMediaQuery('(min-width: 600px)')
+    const shopImage = require('../../../../assets/images/shopImage.png')
 
     // Variable to handle search
     const [search, setSearch] = useState('');
@@ -34,17 +27,21 @@ const ProductList = (props) => {
     //Handling appcolors based on color mode
     const [appColors, setAppColors] = useState(lightTheme)
 
-    //Variable to handle modal ref
-    const modalRef = useRef();
-
-    //Variable used to navigate between screens
-    const navigation = useNavigate()
-
     //Variable to handle redux dispatch
     const dispatch = useDispatch()
 
     //Variable used to show toast snackbar
     const toast = useToast();
+
+    //Variable to handle modal ref
+    const modalRef = useRef();
+
+    // single media query with no options
+    const [isLargerThan900] = useMediaQuery('(min-width: 900px)')
+    const [isLargerThan700] = useMediaQuery('(min-width: 600px)')
+
+    //Variable to hold the value of products to be removed
+    const [removeProduct, setRemoveProduct] = useState();
 
     //Variable to handle dialog state
     const [isDeleteDialog, setDeleteDialog] = useState(false);
@@ -52,7 +49,7 @@ const ProductList = (props) => {
     //Variable to handle logout confirmation dialog props
     const deleteDialogProps = {
         title: 'Delete Confirmation',
-        description: 'Are you sure you want to delete this product?',
+        description: 'Are you sure you want to delete this product from cart?',
         buttons: [
             {
                 id: 1,
@@ -75,55 +72,33 @@ const ProductList = (props) => {
     //Variable used to get productlist states from redux
     const commonReducer = useSelector(state => state.commonReducer)
 
-    //Variable to handle selected products
-    const [selectedProduct, setSelectedProduct] = useState()
-
     //Variable to handle pagination
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    //Function to called while clicking edit icon
-    const onEditClicked = (id) => {
-        dispatch(resetProductList())
-        navigation('/addproduct', { replace: true, state: { productId: id } });
-    }
-
     //Function to be called while clicking delete button
     const onDeletePress = (item) => {
+        setRemoveProduct(item)
         setDeleteDialog(true);
-        setSelectedProduct(item)
+    }
+
+    //Function to check whether the product is selected or not
+    const isSelectedProduct = (item) => {
+        const isSelected = productsReducer?.selectedProducts?.find((element) => element._id === item._id);
+        return isSelected
     }
 
     //Function to be called while responding to confimration
     const confirmation = (action) => {
         setDeleteDialog(false);
         if (action === 'Yes') {
-            dispatch(updateLoader())
-            dispatch(resetProductList())
-            dispatch(deleteMethod({
-                url: API.DELETE_PRODUCT_SAFELY,
-                queryParams: {
-                    deleteId: selectedProduct._id
-                }
-            })).unwrap().then((res) => {
-                setSelectedProduct();
-                getProductListData({ offset: 0 });
-                setPage(0);
-                toast({
-                    title: 'Product deleted successfully',
-                    status: 'success',
-                    duration: 2000,
-                    isClosable: true,
-                })
-            }).catch((err) => {
-                getProductListData({ offset: 0 });
-                setPage(0);
-                toast({
-                    title: 'Failed to delete product',
-                    status: 'error',
-                    duration: 2000,
-                    isClosable: true,
-                })
+            dispatch(updateSelectedProduct(removeProduct));
+            setRemoveProduct();
+            toast({
+                title: 'Product removed from cart successfully',
+                status: 'success',
+                duration: 2000,
+                isClosable: true,
             })
         }
     }
@@ -143,12 +118,6 @@ const ProductList = (props) => {
         setPage(0);
     };
 
-    //Price formatter
-    const priceFormatter = useCallback((price) => {
-        const formattedPrice = CommonService.priceFormatter(price)
-        return formattedPrice
-    }, [])
-
     //Function to set product list data in reducer
     const getProductListData = ({ offset = null, limit = null, clearSearch = false }) => {
         dispatch(postMethod({
@@ -161,14 +130,15 @@ const ProductList = (props) => {
         })).unwrap().then((res) => {
             dispatch(updateProductList(res))
         }).catch((err) => {
-            toast({
-                title: 'Failed to fetch data',
-                status: 'warning',
-                duration: 2000,
-                isClosable: true,
-            })
+            console.log('fetch product error', err)
         })
     }
+
+    //Price formatter
+    const priceFormatter = useCallback((price) => {
+        const formattedPrice = CommonService.priceFormatter(price)
+        return formattedPrice
+    }, [])
 
     //Template to render list of products
     const RenderItems = () => {
@@ -189,7 +159,10 @@ const ProductList = (props) => {
                                 flex={0.2}
                             />
                             <Box display='flex' flex={0.8} flexDirection='column' pt={3}>
+
+                                {/* Product name view */}
                                 <HStack display='flex' minW={'100%'} justifyContent={'space-between'} pr={5}>
+
                                     <Text
                                         fontSize={'lg'}
                                         fontWeight='medium'
@@ -202,17 +175,42 @@ const ProductList = (props) => {
                                         {item?.productName?.length > 20 ? item?.productName?.slice(0, 15) : item?.productName}
                                     </Text>
 
-                                    <ButtonGroup spacing={2}>
-                                        <IconButton borderRadius={'full'} onClick={() => { onEditClicked(item?._id) }}>
-                                            <FaPencilAlt />
-                                        </IconButton>
-                                        <IconButton borderRadius={'full'} onClick={() => { onDeletePress(item) }}>
-                                            <FaTrashAlt />
-                                        </IconButton>
-                                    </ButtonGroup>
+                                    {isSelectedProduct(item) ?
+                                        <ButtonGroup spacing={2}>
+                                            <IconButton
+                                                isDisabled={true}
+                                                _active={{
+                                                    bg: appColors.solidGreen
+                                                }}
+                                                _hover={{
+                                                    bg: appColors.solidGreen
+                                                }}
+                                                _disabled={{
+                                                    bg: appColors.solidGreen
+                                                }}
+                                                borderRadius={'full'}
+                                                bg={appColors.solidGreen}>
+                                                <GoVerified color={appColors.light} />
+                                            </IconButton>
+                                            <IconButton borderRadius={'full'} onClick={() => { onDeletePress(item) }} bg={appColors.lightRed}>
+                                                <GoX color={appColors.light} />
+                                            </IconButton>
+                                        </ButtonGroup> :
+                                        <ButtonGroup spacing={2}>
+                                            <IconButton
+                                                boxShadow={'lg'}
+                                                borderRadius={'full'}
+                                                onClick={() => { dispatch(updateSelectedProduct(item)) }}
+                                                bg={appColors.primary}
+                                            >
+                                                <GoPlus color={appColors.light} />
+                                            </IconButton>
+                                        </ButtonGroup>
+                                    }
+
                                 </HStack>
 
-                                {/* <Box display={'flex'} flexDirection={'column'}> */}
+                                {/* Brandname and product type */}
                                 <Wrap alignItems={'flex-start'} mt={5}>
                                     <WrapItem>
                                         <Badge colorScheme='green' pl={2} pr={2} pt={1} pb={1} mb={2} mr={2} fontFamily={config.fontFamily} borderRadius={7}>
@@ -225,7 +223,6 @@ const ProductList = (props) => {
                                         </Badge>
                                     </WrapItem>
                                 </Wrap>
-                                {/* </Box> */}
 
                                 {
                                     item?.labelArray?.length ? <Wrap mt={3} mb={3}>
@@ -281,13 +278,6 @@ const ProductList = (props) => {
                     })}
                 </Grid>
 
-                {/* <CommonPagination
-                    count={productsReducer?.totalCount}
-                    page={page}
-                    rowsPerPage={rowsPerPage}
-                    handleChangePage={handleChangePage}
-                    handleChangeRowsPerPage={handleChangeRowsPerPage}
-                /> */}
             </Box>
         )
     }
@@ -295,10 +285,6 @@ const ProductList = (props) => {
     //UseEffect to be called initially
     useEffect(() => {
         dispatch(resetProductList())
-        dispatch(updateSelectedPage({
-            menuTitle: 'Products',
-            submenuTitle: 'ProductList'
-        }))
         getProductListData({ offset: 0 })
     }, [])
 
@@ -317,9 +303,9 @@ const ProductList = (props) => {
     //Function to be called while clearing search
     const onClearSearch = () => {
         setSearch('')
+        setPage(0)
         dispatch(resetProductList())
         getProductListData({ offset: 0, clearSearch: true });
-        setPage(0);
     }
 
     // UseEffect to update theme
@@ -332,15 +318,8 @@ const ProductList = (props) => {
         }
     }, [commonReducer.appTheme])
 
-
     return (
         <Box>
-
-            <Box display={'flex'} flexDirection={'row'} mt={5} mb={5}>
-                <Text fontSize={'4xl'} fontFamily={config.fontFamily} pl={5} fontWeight={'semibold'}>
-                    ProductList
-                </Text>
-            </Box>
 
             {/* Search bar View */}
             <HStack m={10} ml={5} justifyContent={'space-between'}>
@@ -373,21 +352,10 @@ const ProductList = (props) => {
                         </ButtonGroup>
                     </InputRightElement>
                 </InputGroup>
-                <Button
-                    fontFamily={config.fontFamily}
-                    leftIcon={<AiOutlinePlus color={appColors.light} strokeWidth={'50px'} />}
-                    bg={appColors.primary}
-                    color={appColors.light}
-                    onClick={() => {
-                        navigation('/addProduct', { replace: true })
-                    }}
-                >
-                    {isLargerThan900 ? 'Add Product' : 'Add'}
-                </Button>
             </HStack>
 
             {productsReducer.status === 'loading' ?
-                <CommonLoader /> :
+                <CommonLoader h='40vh'/> :
                 productsReducer?.data?.length ?
                     <Box minH={'100vh'} mb={100}>
                         <RenderItems />
@@ -400,14 +368,14 @@ const ProductList = (props) => {
                         />
                     </Box>
                     :
-                    <Center h={'70vh'} >
+                    <Center h={'50vh'} >
                         <Text fontFamily={config.fontFamily} fontSize='2xl' fontWeight={'semibold'}>
                             No products found
                         </Text>
                     </Center>
             }
 
-            {/* Delete product confirmation */}
+            {/* Delete cart product confirmation */}
             <Modal finalFocusRef={modalRef} isOpen={isDeleteDialog}>
                 <Confirmation isOpen={isDeleteDialog} dialogProps={deleteDialogProps} confirmation={confirmation} />
             </Modal>
@@ -416,4 +384,4 @@ const ProductList = (props) => {
     );
 }
 
-export default ProductList;
+export default SelectedProducts;

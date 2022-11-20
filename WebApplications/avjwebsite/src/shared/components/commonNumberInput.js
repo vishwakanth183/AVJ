@@ -8,6 +8,7 @@ import {
     Box, InputLeftAddon, InputGroup
 } from '@chakra-ui/react'
 import { BiRupee } from 'react-icons/bi'
+import {BsBagFill} from 'react-icons/bs'
 
 //Custom imports
 import { config } from "../../environment";
@@ -26,7 +27,10 @@ const CommonNumberInput = ({
     onBlur = () => { },
     value,
     precision = true,
-    priceIcon = true }) => {
+    priceIcon = true,
+    bagIcon = false,
+    readOnly = false
+ }) => {
 
     //Function used to handle number input changes
     const handleChange = (value) => {
@@ -35,8 +39,8 @@ const CommonNumberInput = ({
 
     return (
         <Box mb={mb}>
-            <InputGroup>
-                {priceIcon ? <InputLeftAddon children={<BiRupee />} /> : false}
+            <InputGroup >
+                {priceIcon || bagIcon? <InputLeftAddon children={priceIcon ? <BiRupee /> : <BsBagFill />} /> : false}
                 <NumberInput
                     defaultValue={defaultValue}
                     precision={precision ? 2 : 0}
@@ -49,6 +53,7 @@ const CommonNumberInput = ({
                     value={value}
                     onBlur={onBlur}
                     onChange={handleChange}
+                    isReadOnly={readOnly}
                 >
                     <NumberInputField fontFamily={config.fontFamily} />
                     <NumberInputStepper fontFamily={config.fontFamily}>

@@ -57,12 +57,13 @@ const getAllLineBusiness = async (req, res) => {
 
     await LineBusiness.find({
         buyedFrom: search,
-        soldTo: search,
+        // soldTo: search,
+        // $or : [{'buyedFrom' : search , 'soldTo' : search}],
         $expr: req.body.paymentStatus === "Pending" ? { $lt: ['$paidAmount', '$soldValue'] } : { $gte: ['$paidAmount', '$soldValue'] }
     }).skip(offset).limit(limit).then(async (response) => {
         await LineBusiness.count({
             buyedFrom: search,
-            soldTo: search,
+            // soldTo: search,
             $expr: req.body.paymentStatus === "Pending" ? { $lt: ['$paidAmount', '$soldValue'] } : { $gte: ['$paidAmount', '$soldValue'] }
         }).then((countRes) => {
             // console.log('totalCount', countRes)

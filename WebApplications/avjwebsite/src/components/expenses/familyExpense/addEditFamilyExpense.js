@@ -35,6 +35,9 @@ const AddEditFamilyExpense = ({ props, expenseId, isReadOnly = false }) => {
     //Variable to handle list titles
     const tableHeaderList = ['Expenses', 'Total', 'Edit']
 
+    //Months 
+    const months = ['January' , 'February' , 'March' , 'April' , 'May' , 'June' , 'July' , 'August' , 'September' , 'October' , 'November' , 'December']
+
     //Variable used to dispatch redux action
     const dispatch = useDispatch()
 
@@ -89,8 +92,8 @@ const AddEditFamilyExpense = ({ props, expenseId, isReadOnly = false }) => {
     const formik = useFormik({
         validationSchema: validationSchema,
         initialValues: {
-            month: editExpenseDetails ? editExpenseDetails.month : '',
-            year: editExpenseDetails ? editExpenseDetails.year : '',
+            month: editExpenseDetails ? editExpenseDetails.month : months[Number(new Date().getMonth())],
+            year: editExpenseDetails ? editExpenseDetails.year : new Date().getFullYear(),
             totalExpense: editExpenseDetails ? editExpenseDetails.totalExpense :
                 [
                     {
@@ -163,6 +166,7 @@ const AddEditFamilyExpense = ({ props, expenseId, isReadOnly = false }) => {
             console.log('Err', err)
             toast({
                 title: 'Failed to create expense',
+                description : err?.message,
                 status: 'error',
                 duration: 2000,
                 isClosable: true,
@@ -292,6 +296,7 @@ const AddEditFamilyExpense = ({ props, expenseId, isReadOnly = false }) => {
                     </FormLabel>
                     <CommonGroupInput
                         labelName='Month'
+                        readOnly={true}
                         w={400}
                         value={formik.values.month}
                         onBlur={formik.handleBlur('month')}
@@ -307,6 +312,7 @@ const AddEditFamilyExpense = ({ props, expenseId, isReadOnly = false }) => {
                     </FormLabel>
                     <CommonGroupInput
                         labelName='Year'
+                        readOnly={true}
                         w={400}
                         value={formik.values.year}
                         onBlur={formik.handleBlur('year')}
