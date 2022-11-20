@@ -44,6 +44,11 @@ import AddEditProducts from '../products/addEditProducts/addEditProducts'
 import FamilyExpenseList from '../expenses/familyExpense/familyExpenseList';
 import AddEditFamilyExpense from '../expenses/familyExpense/addEditFamilyExpense'
 import BorrowedList from '../expenses/borrowed/borrowedList';
+import AddEditBorrowed from '../expenses/borrowed/addEditBorrowed'
+import InvestmentList from '../expenses/investment/investmentList';
+import AddEditInvestment from '../expenses/investment/addEditInvestment'
+import LineBusinessList from '../revenue/lineBusiness/lineBusiness';
+import AddEditLineBusiness from '../revenue/lineBusiness/addEditLineBusiness'
 
 const CustomDrawer = () => {
 
@@ -319,6 +324,11 @@ const CustomDrawer = () => {
                     <Route path='/familyExpense' element={<FamilyExpenseList />} />
                     <Route path='/addEditFamilyExpense' element={<AddEditFamilyExpense />} />
                     <Route path='/borrowedList' element={<BorrowedList />} />
+                    <Route path='/addEditBorrowed' element={<AddEditBorrowed />} />
+                    <Route path='/investmentList' element={<InvestmentList />} />
+                    <Route path='/addEditInvestment' element={<AddEditInvestment />} />
+                    <Route path='/lineBusinessList' element={<LineBusinessList />} />
+                    <Route path='/addEditLineBusiness' element={<AddEditLineBusiness />} />
                 </Routes>
 
             </Box>

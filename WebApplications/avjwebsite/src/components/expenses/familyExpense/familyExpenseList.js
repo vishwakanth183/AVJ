@@ -148,9 +148,9 @@ const FamilyExpenseList = (props) => {
                 <CommonLoader />
                 :
                 <Box>
-                    <HStack w={'100%'} justifyContent={'space-between'} p={5} pl={0} mb={5}>
+                    <HStack w={'100%'} justifyContent={'space-between'} p={5} pl={0} mb={5} alignItems={'center'}>
                         <Box display={'flex'} flexDirection={'row'}>
-                            <Text fontSize={'4xl'} fontFamily={config.fontFamily} pl={5} fontWeight={'bold'}>
+                            <Text fontSize={'4xl'} fontFamily={config.fontFamily} pl={5} fontWeight={'semibold'}>
                                 Family Expense
                             </Text>
                         </Box>

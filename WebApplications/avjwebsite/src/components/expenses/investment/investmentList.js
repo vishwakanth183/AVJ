@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom'
-import { Box, Center, Divider, theme } from '@chakra-ui/react';
+import { Box, Center } from '@chakra-ui/react';
 import {
     Tabs,
     TabList,
@@ -19,23 +19,23 @@ import { BsSearch } from 'react-icons/bs'
 import { AiOutlineClose, AiOutlinePlus } from 'react-icons/ai';
 import { GoVerified } from 'react-icons/go'
 import { HiOutlineClipboard } from 'react-icons/hi';
-import { FaChevronDown, FaChevronUp, FaPencilAlt } from 'react-icons/fa';
+import { FaPencilAlt } from 'react-icons/fa';
 import { useSelector, useDispatch } from "react-redux";
 
 // Custom imports
 import { config } from '../../../environment';
 import { API } from '../../../shared/API';
 import { lightTheme, darkTheme } from '../../../shared/theme';
-import { resetBorrowedList, updateBorrowedList } from '../../../redux/borrowedSlice'
+import { resetInvestmentList, updateInvestmentList } from '../../../redux/investmentSlice'
 import CommonLoader from '../../../shared/components/commonLoader';
 import { postMethod } from '../../../redux/HttpRouting/httpRoutingRedux';
 import CommonService from '../../../shared/commonService/commonService';
 import CommonPagination from '../../../shared/components/Pagination/commonPagination';
 
-const BorrowedList = (props) => {
+const InvestmentList = (props) => {
 
     //Variable to handle list titles
-    const listTitle = ['Borrowed From', 'Borrowed Amount', "Paid Amount", 'Interest', 'Paid Interest', 'Progress', 'Edit']
+    const listTitle = ['Buyed From', 'Purchase value', 'Final Price', 'Paid Amount', 'Progress', 'Edit']
 
     //Variable used to get productlist states from redux
     const commonReducer = useSelector(state => state.commonReducer)
@@ -47,11 +47,8 @@ const BorrowedList = (props) => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    //Variable to handle selected index
-    const [selectedIndex, setSelectIndex] = useState(null)
-
-    //Variable to maintain borrowed redux value
-    const borrowed = useSelector(state => state.borrowed)
+    //Variable to maintain investment redux value
+    const investment = useSelector(state => state.investment)
 
     // Variabe to handle tab navigation
     const [value, setValue] = useState(0)
@@ -77,54 +74,57 @@ const BorrowedList = (props) => {
 
     // Progress Loader Value
     const progressLoaderValue = useCallback((value) => {
-        const progressValue = CommonService.progressLoader({ totalAmount: value.borrowedAmount, amountPaid: value.paidAmount })
+        // console.log('investment item',value.finalPrice , value.paidAmount)
+        const progressValue = CommonService.progressLoader({ totalAmount: value.finalPrice, amountPaid: value.paidAmount })
         return progressValue
     }, [])
+
+
 
     //Function to be called while clearing search
     const onClearSearch = () => {
         setSearch('')
-        dispatch(resetBorrowedList())
-        getBorrowedListData({ offset: 0, clearSearch: true })
+        dispatch(resetInvestmentList())
+        getInvestmentListData({ offset: 0, clearSearch: true })
     }
-
 
     //Function to handle pagination row changes
     const handleChangeRowsPerPage = (newRow) => {
-        dispatch(resetBorrowedList())
+        dispatch(resetInvestmentList())
         setRowsPerPage(newRow);
-        getBorrowedListData({ offset: 0, limit: newRow })
+        getInvestmentListData({ offset: 0, limit: newRow })
         setPage(0);
     };
 
     //Function handle pageination changes
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
-        dispatch(resetBorrowedList())
-        getBorrowedListData({ offset: newPage })
+        dispatch(resetInvestmentList())
+        getInvestmentListData({ offset: newPage })
     };
 
     //Function to set product list data in reducer
-    const getBorrowedListData = ({ offset = null, limit = null, clearSearch = false }) => {
+    const getInvestmentListData = ({ offset = null, limit = null, clearSearch = false }) => {
         dispatch(postMethod({
-            url: API.GET_ALL_BORROWED,
+            url: API.GET_ALL_INVESTMENT,
             data: {
-                paymentStatus: value === 0 ? 'Pending' : 'Paid',
                 offset: offset !== null ? offset * rowsPerPage : page * rowsPerPage,
                 limit: limit !== null ? limit : rowsPerPage,
-                search: clearSearch ? '' : search
+                search: clearSearch ? '' : search,
+                paymentStatus: value === 0 ? 'Pending' : 'Paid',
             }
         })).unwrap().then((res) => {
-            dispatch(updateBorrowedList(res));
+            console.log("ressss", res)
+            dispatch(updateInvestmentList(res));
         }).catch((err) => {
-            console.log('borrowed list error', err.message)
+            console.log('investment list error', err.message)
         })
     }
 
     //Function to called while clicking edit icon
     const onEditClicked = (id) => {
-        dispatch(resetBorrowedList())
-        navigation('/addEditBorrowed', { replace: true, state: { borrowedId: id } });
+        dispatch(resetInvestmentList())
+        navigation('/addEditInvestment', { replace: true, state: { investmentId: id } });
     }
 
     // UseEffect to update theme
@@ -137,18 +137,18 @@ const BorrowedList = (props) => {
         }
     }, [commonReducer.appTheme])
 
-    //useEffect to get borrowed list
+    //useEffect to get investment list
     useEffect(() => {
-        dispatch(resetBorrowedList())
-        getBorrowedListData({ offset: 0 })
+        dispatch(resetInvestmentList())
+        getInvestmentListData({ offset: 0 })
     }, [value])
 
     //UseEffect which will be called while searching a particular product
     useEffect(() => {
         const searchDebounceFunction = setTimeout(() => {
             if (search) {
-                dispatch(resetBorrowedList())
-                getBorrowedListData({ offset: 0 })
+                dispatch(resetInvestmentList())
+                getInvestmentListData({ offset: 0 })
             }
         }, 1000)
         return () => clearTimeout(searchDebounceFunction)
@@ -158,9 +158,10 @@ const BorrowedList = (props) => {
     return (
         <Box>
 
+
             <Box display={'flex'} flexDirection={'row'} mt={5} mb={5}>
                 <Text fontSize={'4xl'} fontFamily={config.fontFamily} pl={5} fontWeight={'semibold'}>
-                    BorrowedList
+                    InvestmentList
                 </Text>
             </Box>
 
@@ -189,7 +190,7 @@ const BorrowedList = (props) => {
                                 fontSize='lg'
                                 fontWeight={'semibold'}
                             >
-                                Pending/Cancelled
+                                Pending
                             </Text>
                         </Box>
                     </Tab>
@@ -239,7 +240,7 @@ const BorrowedList = (props) => {
                                 setSearch(event.target.value)
                             }
                         }}
-                        placeholder={'Search by borrower name'}
+                        placeholder={'Search by buyed shop name'}
                     />
                     <InputRightElement pr={search ? 10 : 0}>
                         <ButtonGroup>
@@ -261,25 +262,25 @@ const BorrowedList = (props) => {
                     bg={appColors.primary}
                     color={appColors.light}
                     onClick={() => {
-                        navigation('/addEditBorrowed', { replace: true })
+                        navigation('/addEditInvestment', { replace: true })
                     }}
                 >
-                    {isLargerThan900 ? 'Add Borrowed' : 'Add'}
+                    {isLargerThan900 ? 'Add Investment' : 'Add'}
                 </Button>
             </HStack>
 
             {/* List View */}
             {
-                borrowed?.status === 'loading' ?
+                investment?.status === 'loading' ?
                     <CommonLoader h='50vh' />
                     :
-                    borrowed?.data?.length ?
+                    investment?.data?.length ?
                         <Box>
 
                             {/* Rendering list */}
                             <TableContainer>
                                 <Table colorScheme='blackAlpha'>
-                                    <TableCaption fontFamily={config.fontFamily} fontSize={'md'}>Borrowed Expenses</TableCaption>
+                                    <TableCaption fontFamily={config.fontFamily} fontSize={'md'}>Shop Investment</TableCaption>
 
                                     {/* Header View */}
                                     <Thead bg={appColors.dark}>
@@ -298,18 +299,25 @@ const BorrowedList = (props) => {
                                         </Tr>
                                     </Thead>
 
-                                    {/* Row Data View */}
-                                    {borrowed.data.map((borrowedItem, borrowedIndex) => {
+                                    {/* Investment List View */}
+                                    {investment?.data?.map((item, index) => {
                                         return <Tbody>
                                             <Tr>
-                                                <Td fontFamily={config.fontFamily}>{borrowedItem.borrowedFrom}</Td>
-                                                <Td fontFamily={config.fontFamily}>₹{priceFormatter(Number(borrowedItem.borrowedAmount))}</Td>
-                                                <Td fontFamily={config.fontFamily}>₹{priceFormatter(Number(borrowedItem.paidAmount))}</Td>
-                                                <Td fontFamily={config.fontFamily}>{borrowedItem.interestPercentage}%</Td>
-                                                <Td fontFamily={config.fontFamily}>₹{priceFormatter(Number(borrowedItem.interestPaid))}</Td>
+                                                <Td fontFamily={config.fontFamily}>
+                                                    {item.buyedFrom}
+                                                </Td>
+                                                <Td fontFamily={config.fontFamily}>
+                                                    ₹{priceFormatter(item?.purchaseValue)}
+                                                </Td>
+                                                <Td fontFamily={config.fontFamily} color={appColors.primaryBlue} fontWeight={'semibold'}>
+                                                    ₹{priceFormatter(item?.finalPrice)}
+                                                </Td>
+                                                <Td fontFamily={config.fontFamily} color={appColors.green} fontWeight={'semibold'}>
+                                                    ₹{priceFormatter(item?.paidAmount)}
+                                                </Td>
                                                 <Td fontFamily={config.fontFamily}>
                                                     {
-                                                        progressLoaderValue(borrowedItem) >= 100 ?
+                                                        progressLoaderValue(item) >= 100 ?
                                                             <Box pl={30}>
                                                                 <GoVerified
                                                                     size={22}
@@ -318,19 +326,33 @@ const BorrowedList = (props) => {
                                                             </Box>
                                                             :
                                                             <Box pl={30}>
-                                                                < CircularProgress value={progressLoaderValue(borrowedItem)} color={progressLoaderValue(borrowedItem) >= 100 ? appColors.green : progressLoaderValue(borrowedItem) >= 75 ? appColors.orange : appColors.lightRed} size={50}>
-                                                                    <CircularProgressLabel>{progressLoaderValue(borrowedItem)}%</CircularProgressLabel>
+                                                                < CircularProgress value={progressLoaderValue(item)} color={progressLoaderValue(item) >= 100 ? appColors.green : progressLoaderValue(item) >= 75 ? appColors.orange : appColors.lightRed} size={50}>
+                                                                    <CircularProgressLabel>{progressLoaderValue(item)}%</CircularProgressLabel>
                                                                 </CircularProgress>
                                                             </Box>
                                                     }
                                                 </Td>
                                                 <Td fontFamily={config.fontFamily}>
                                                     <IconButton borderRadius={'full'} bg={'none'} onClick={() => {
-                                                        onEditClicked(borrowedItem._id)
+                                                        onEditClicked(item._id)
                                                     }}>
                                                         <FaPencilAlt />
                                                     </IconButton>
                                                 </Td>
+                                                {/* <Td fontFamily={config.fontFamily}>
+                                                    <IconButton borderRadius={'full'} bg={'none'} onClick={() => {
+                                                        if (selectedIndex === expenseIndex) {
+                                                            setSelectIndex(null)
+                                                        }
+                                                        else {
+                                                            setSelectIndex(expenseIndex)
+                                                        }
+                                                    }}>
+                                                        {selectedIndex != null && selectedIndex === expenseIndex ?
+                                                            <FaChevronUp /> :
+                                                            <FaChevronDown />}
+                                                    </IconButton>
+                                                </Td> */}
                                             </Tr>
                                         </Tbody>
                                     })}
@@ -340,7 +362,7 @@ const BorrowedList = (props) => {
 
                             {/* Pagination */}
                             <CommonPagination
-                                count={borrowed?.totalCount}
+                                count={investment?.totalCount}
                                 page={page}
                                 rowsPerPage={rowsPerPage}
                                 handleChangePage={handleChangePage}
@@ -351,7 +373,7 @@ const BorrowedList = (props) => {
                         :
                         <Center h={'70vh'} >
                             <Text fontFamily={config.fontFamily} fontSize='2xl' fontWeight={'semibold'}>
-                                No Borrowed found
+                                No investment found
                             </Text>
                         </Center>
             }
@@ -361,4 +383,4 @@ const BorrowedList = (props) => {
     );
 }
 
-export default BorrowedList;
+export default InvestmentList;

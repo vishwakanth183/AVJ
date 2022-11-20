@@ -1,9 +1,9 @@
 import React from 'react';
 import { Center, Spinner } from '@chakra-ui/react'
 
-const CommonLoader = ({ fullScreen = true }) => {
+const CommonLoader = ({ h = '100vh' }) => {
     return (
-        <Center h={'100vh'}>
+        <Center h={h}>
             <Spinner
                 thickness='4px'
                 speed='0.65s'

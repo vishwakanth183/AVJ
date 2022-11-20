@@ -13,7 +13,20 @@ import { BiRupee } from 'react-icons/bi'
 import { config } from "../../environment";
 
 
-const CommonNumberInput = ({ defaultValue = null, min = null, max = undefined, w = '100%', h = null, maxW = null, maxH = null, onChange = () => { }, onBlur = () => { }, value, precision = true, priceIcon = true }) => {
+const CommonNumberInput = ({
+    defaultValue = null,
+    min = null,
+    max = undefined,
+    w = '100%',
+    h = null,
+    maxW = null,
+    maxH = null,
+    mb=undefined,
+    onChange = () => { },
+    onBlur = () => { },
+    value,
+    precision = true,
+    priceIcon = true }) => {
 
     //Function used to handle number input changes
     const handleChange = (value) => {
@@ -21,7 +34,7 @@ const CommonNumberInput = ({ defaultValue = null, min = null, max = undefined, w
     }
 
     return (
-        <Box>
+        <Box mb={mb}>
             <InputGroup>
                 {priceIcon ? <InputLeftAddon children={<BiRupee />} /> : false}
                 <NumberInput

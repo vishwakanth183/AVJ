@@ -7,17 +7,12 @@ const createBorrowed = async (req, res) => {
     console.log('BorrowedData', req.body)
 
     await Borrowed.create({
-        sellerName: req.body.sellerName,
-        buyerName: req.body.buyerName,
-        paymentStatus: req.body.paymentStatus,
-        profit: req.body.profit,
-        paymentType: req.body.paymentType,
-        onlinePaymentType: req.body.onlinePaymentType,
-        actualPrice: req.body.actualPrice,
-        discount: req.body.discount,
-        finalPrice: req.body.finalPrice,
+        borrowedFrom: req.body.borrowedFrom,
+        borrowedAmount: req.body.borrowedAmount,
+        interestPercentage: req.body.interestPercentage,
+        interestPaid: req.body.interestPaid,
+        paidAmount: req.body.paidAmount,
         description: req.body.description,
-        orderedProducts: req.body.orderedProducts
     }).then(() => {
         res.status(statusCodes.success).json('Borrowed Data created successfully')
     }).catch((error) => {
@@ -47,31 +42,19 @@ module.exports.getSingleBorrowedDetails = getSingleBorrowedDetails
 //Function to get all Borrowed based on Borrowed month
 const getAllBorrowed = async (req, res) => {
 
-    let paymentStatusArray = [req.body.paymentStatus]
+    console.log('Get All Borrowed' , req.body.paymentStatus)
 
-    if (req.body.paymentStatus === 'Pending') {
-        paymentStatusArray.push('Cancelled')
-    }
-
-    const search = new RegExp('')
+    const search = new RegExp(req.body.search)
     const offset = req.body.offset ? req.body.offset : 0
     const limit = req.body.limit ? req.body.limit : 100
 
-    await Borrowed.aggregate([
-        {
-            $match: {
-                // paymentStatus: (req.body.paymentStatus) || 'Cancelled',
-                // $or: [{
-                //     paymentStatus: req.body.paymentStatus,
-                // }]
-                "paymentStatus": { $in: paymentStatusArray },
-                "buyerName": { $regex: search, $options: 'i' }
-            },
-        }
-    ]).skip(offset).limit(limit).then(async (response) => {
+    await Borrowed.find({
+        borrowedFrom: { $regex: search, $options: 'i' },
+        $expr: req.body.paymentStatus === "Pending" ? { $lt: [ '$paidAmount' , '$borrowedAmount'] } : { $gte: [ '$paidAmount' , '$borrowedAmount'] }
+    }).skip(offset).limit(limit).then(async (response) => {
         await Borrowed.count({
-            paymentStatus: { $in: paymentStatusArray },
-            buyerName: { $regex: search, $options: 'i' }
+            borrowedFrom: { $regex: search, $options: 'i' },
+            $expr: req.body.paymentStatus === "Pending" ? { $lt: [ '$paidAmount' , '$borrowedAmount'] } : { $gte: [ '$paidAmount' , '$borrowedAmount'] }
         }).then((countRes) => {
             res.status(statusCodes.success).json({
                 listData: response,
@@ -81,6 +64,7 @@ const getAllBorrowed = async (req, res) => {
             res.status(statusCodes.notFound).json(err)
         })
     }).catch((error) => {
+        console.log('catch error borrowed',error)
         res.status(statusCodes.notFound).json(error)
     })
 }

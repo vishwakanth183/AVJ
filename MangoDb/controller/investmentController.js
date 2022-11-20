@@ -7,25 +7,19 @@ const createInvestment = async (req, res) => {
     console.log('investmentData', req.body)
 
     await Investment.create({
-        sellerName: req.body.sellerName,
-        buyerName: req.body.buyerName,
-        paymentType: req.body.paymentType,
-        onlinePaymentType: req.body.onlinePaymentType,
-        actualPrice: req.body.actualPrice,
+        buyedFrom: req.body.buyedFrom,
+        purchaseValue: req.body.purchaseValue,
         discount: req.body.discount,
         finalPrice: req.body.finalPrice,
+        travelExpense: req.body.travelExpense,
+        paidAmount : req.body.paidAmount,
         description: req.body.description,
         orderedProducts: req.body.orderedProducts
     }).then(() => {
         res.status(statusCodes.success).json('Investment created successfully')
     }).catch((error) => {
         console.log('error', error)
-        if (error.code === 11000) {
-            res.status(11000).json("Duplicate Investment ! Can't add a Investment with same name more than once")
-        }
-        else {
-            res.status(statusCodes.unprocessableEntity).json('Something wrong happened in creating investment! Try Again!')
-        }
+        res.status(statusCodes.unprocessableEntity).json('Something wrong happened in creating investment! Try Again!')
     })
 }
 module.exports.createInvestment = createInvestment
@@ -45,18 +39,18 @@ module.exports.getSingleInvestmentDetails = getSingleInvestmentDetails
 //Function to get all investment based on investment month
 const getAllInvestment = async (req, res) => {
 
-    const search = new RegExp('')
+    const search = new RegExp(req.body.search)
     const offset = req.body.offset ? req.body.offset : 0
     const limit = req.body.limit ? req.body.limit : 100
 
 
     await Investment.find({
-        buyerName: search,
-        sellerName: search
+        buyedFrom: search,
+        $expr: req.body.paymentStatus === "Pending" ? { $lt: [ '$paidAmount' , '$finalPrice'] } : { $gte: [ '$paidAmount' , '$finalPrice'] }
     }).skip(offset).limit(limit).then(async (response) => {
         await Investment.count({
-            buyerName: search,
-            sellerName: search
+            buyedFrom: search,
+            $expr: req.body.paymentStatus === "Pending" ? { $lt: [ '$paidAmount' , '$finalPrice'] } : { $gte: [ '$paidAmount' , '$finalPrice'] }
         }).then((countRes) => {
             res.status(statusCodes.success).json({
                 listData: response,

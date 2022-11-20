@@ -1,22 +1,12 @@
 const mongoose = require('mongoose')
 
 const BorrowedSchema = new mongoose.Schema({
-    sellerName: { type: String, required: true },
-    buyerName: { type: String, required: true },
-    paymentStatus : { type: String, required: true },
-    paymentType: { type: String, default : null },
-    onlinePaymentType: { type: String, default: null },
-    actualPrice: { type: Number, required: true, default: 0 },
-    discount: { type: Number, required: true, default: 0 },
-    finalPrice: { type: Number, required: true, default: 0 },
+    borrowedFrom: { type: String, required: true },
+    borrowedAmount: { type: Number, required: true, default: 0 },
+    interestPercentage: { type: Number, required: true, default: 0 },
+    interestPaid: { type: Number, required: true, default: 0 },
+    paidAmount: { type: Number, required: true, default: 0 },
     description: { type: String, default: null },
-    orderedProducts: [
-        {
-            productName: { type: String, required: true },
-            amount: { type: Number, required: true, default: 0 },
-            quantity: { type: Number, required: true },
-        }
-    ]
 }, { timestamps: true }
 )
 

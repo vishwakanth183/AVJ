@@ -1,22 +1,23 @@
 
 const white = 'white'
 const black = 'black'
-const lightBlack = 'black.100'
 const teal = 'teal'
-const lightTeal = 'teal.100'
 const highlightColor = 'coral'
-const dissabledColor = 'grey.100'
 const errorColor = 'red'
+const green = "green"
+const orange = "orange"
+const gray = "gray"
+const borderColor = '#ddd'
+
+const lightBlack = 'black.100'
+const lightTeal = 'teal.100'
+const dissabledColor = 'grey.100'
 const primaryBlue = 'blue.600'
 const formTitle = 'purple.600'
-const green = "green"
 const lightGreen = "green.100"
-const orange = "orange"
 const lightOrange = "orange.300"
 const lightRed = "red.500"
-const gray = "gray"
 const lightGray = "gray.100"
-const borderColor = '#ddd'
 const tabBackground = primaryBlue
 const tabTitle = orange
 

@@ -30,6 +30,9 @@ const RestoredProductList = (props) => {
     const [isLargerThan900] = useMediaQuery('(min-width: 900px)')
     const [isLargerThan700] = useMediaQuery('(min-width: 600px)')
 
+    //Variable to handle search
+    const [search, setSearch] = useState('');
+
     //Handling appcolors based on color mode
     const [appColors, setAppColors] = useState(lightTheme)
 
@@ -361,18 +364,17 @@ const RestoredProductList = (props) => {
         }))
         getRestoredProducts({ offset: 0 })
     }, [])
+    
 
-    const [search, setSearch] = useState('');
-
-    //UseEffect to be called while changing search value
+    //UseEffect which will be called while searching a particular product
     useEffect(() => {
-        if (search) {
-            setTimeout(() => {
+        const searchDebounceFunction = setTimeout(() => {
+            if (search) {
                 dispatch(resetRestoredProductList())
                 getRestoredProducts({ offset: 0 });
-                // setPage(0);
-            }, 2000)
-        }
+            }
+        }, 1000)
+        return () => clearTimeout(searchDebounceFunction)
     }, [search])
 
     //Function to be called while clearing search

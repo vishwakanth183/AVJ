@@ -10,10 +10,10 @@ export const drawerMenu = [
                 submenuTitle: 'ProductList',
                 linkto: '/productList'
             },
-            {
-                submenuTitle: 'AddProducts',
-                linkto: '/addproduct'
-            },
+            // {
+            //     submenuTitle: 'AddProducts',
+            //     linkto: '/addproduct'
+            // },
             {
                 submenuTitle : 'Restore Products',
                 linkto : '/restoredProductList'
@@ -29,7 +29,7 @@ export const drawerMenu = [
             },
             {
                 submenuTitle: 'LineBusiness',
-                linkto: '/lineBuisness'
+                linkto: '/lineBusinessList'
             }
         ]
     },
@@ -38,7 +38,7 @@ export const drawerMenu = [
         submenu: [
             {
                 submenuTitle: 'Investment',
-                linkto: '/investment'
+                linkto: '/investmentList'
             },
             {
                 submenuTitle: 'Family Expenses',

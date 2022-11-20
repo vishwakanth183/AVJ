@@ -20,13 +20,16 @@ import { config } from "../../environment";
 import { Confirmation } from "../../shared/components/confirmation";
 
 const ProductList = (props) => {
-
+    
     //Variable to hold shop image
     const shopImage = require('../../assets/images/shopImage.png')
-
+    
     // single media query with no options
     const [isLargerThan900] = useMediaQuery('(min-width: 900px)')
     const [isLargerThan700] = useMediaQuery('(min-width: 600px)')
+    
+    // Variable to handle search
+    const [search, setSearch] = useState('');
 
     //Handling appcolors based on color mode
     const [appColors, setAppColors] = useState(lightTheme)
@@ -299,17 +302,15 @@ const ProductList = (props) => {
         getProductListData({ offset: 0 })
     }, [])
 
-    const [search, setSearch] = useState('');
-
-    //UseEffect to be called while changing search value
+    //UseEffect which will be called while searching a particular product
     useEffect(() => {
-        if (search) {
-            setTimeout(() => {
+        const searchDebounceFunction = setTimeout(() => {
+            if (search) {
                 dispatch(resetProductList())
                 getProductListData({ offset: 0 });
-                // setPage(0);
-            }, 2000)
-        }
+            }
+        }, 1000)
+        return () => clearTimeout(searchDebounceFunction)
     }, [search])
 
     //Function to be called while clearing search

@@ -7,15 +7,13 @@ const createLineBusiness = async (req, res) => {
     console.log('LineBusinessData', req.body)
 
     await LineBusiness.create({
-        sellerName: req.body.sellerName,
-        buyerName: req.body.buyerName,
-        paymentStatus: req.body.paymentStatus,
+        buyedFrom: req.body.buyedFrom,
+        soldTo: req.body.soldTo,
+        purchaseValue: req.body.purchaseValue,
+        soldValue: req.body.soldValue,
+        paidAmount: req.body.paidAmount,
+        travelExpense: req.body.travelExpense,
         profit: req.body.profit,
-        paymentType: req.body.paymentType,
-        onlinePaymentType: req.body.onlinePaymentType,
-        actualPrice: req.body.actualPrice,
-        discount: req.body.discount,
-        finalPrice: req.body.finalPrice,
         description: req.body.description,
         orderedProducts: req.body.orderedProducts
     }).then(() => {
@@ -34,7 +32,7 @@ module.exports.createLineBusiness = createLineBusiness
 
 //Function to get a particular LineBusiness details
 const getSingleLineBusinessDetails = async (req, res) => {
-    await LineBusiness.findById(req.body.businessId).then((lineBusinessDetails) => {
+    await LineBusiness.findById(req.body.linebusinessId).then((lineBusinessDetails) => {
         res.status(statusCodes.success).json(lineBusinessDetails);
     }).catch((error) => {
         console.log("getSingleLineBusinessDetails error", error);
@@ -53,21 +51,19 @@ const getAllLineBusiness = async (req, res) => {
         paymentStatusArray.push('Cancelled')
     }
 
-    const search = new RegExp('')
+    const search = new RegExp(req.body.search)
     const offset = req.body.offset ? req.body.offset : 0
     const limit = req.body.limit ? req.body.limit : 100
 
-    await LineBusiness.aggregate([
-        {
-            $match: {
-                "paymentStatus": { $in: paymentStatusArray },
-                "buyerName": { $regex: search, $options: 'i' }
-            },
-        },
-    ]).skip(offset).limit(limit).then(async (response) => {
+    await LineBusiness.find({
+        buyedFrom: search,
+        soldTo: search,
+        $expr: req.body.paymentStatus === "Pending" ? { $lt: ['$paidAmount', '$soldValue'] } : { $gte: ['$paidAmount', '$soldValue'] }
+    }).skip(offset).limit(limit).then(async (response) => {
         await LineBusiness.count({
-            paymentStatus: { $in: paymentStatusArray },
-            buyerName: { $regex: search, $options: 'i' }
+            buyedFrom: search,
+            soldTo: search,
+            $expr: req.body.paymentStatus === "Pending" ? { $lt: ['$paidAmount', '$soldValue'] } : { $gte: ['$paidAmount', '$soldValue'] }
         }).then((countRes) => {
             // console.log('totalCount', countRes)
             res.status(statusCodes.success).json({
@@ -85,8 +81,8 @@ module.exports.getAllLineBusiness = getAllLineBusiness
 
 //Function to update a particular LineBusiness
 const updateLineBusiness = async (req, res) => {
-    console.log('req.query.businessId', req.query.businessId)
-    await LineBusiness.findByIdAndUpdate(req.query.businessId, {
+    console.log('req.query.linebusinessId', req.query.linebusinessId)
+    await LineBusiness.findByIdAndUpdate(req.query.linebusinessId, {
         $set: req.body.data
     }, { new: true }).then((updatedLineBusiness) => {
         res.status(statusCodes.success).json('LineBusiness Updated Successfully');
