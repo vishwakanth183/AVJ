@@ -39,5 +39,6 @@ export const API = {
     'CREATE_MANUAL_ORDER': 'manualOrderRouter/createManualOrder',
     'UPDATE_MANUAL_ORDER' : 'manualOrderRouter/updateManualOrder',
     'GET_ALL_MANUAL_ORDER': 'manualOrderRouter/getAllManualOrder',
-    'GET_SIGNLE_ORDER': 'manualOrderRouter/getSingleOrderDetails'
+    'GET_SIGNLE_ORDER': 'manualOrderRouter/getSingleOrderDetails',
+    'CANCEL_ORDER' : 'manualOrderRouter/cancelOrder'
 }

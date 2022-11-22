@@ -199,6 +199,7 @@ const SelectedProducts = (props) => {
                                         <ButtonGroup spacing={2}>
                                             <IconButton
                                                 boxShadow={'lg'}
+                                                disabled={item.stock<=0}
                                                 borderRadius={'full'}
                                                 onClick={() => { dispatch(updateSelectedProduct(item)) }}
                                                 bg={appColors.primary}

@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom'
-import { Box, Center } from '@chakra-ui/react';
+import { Badge, Box, Center, Modal, useToast, Tooltip } from '@chakra-ui/react';
 import {
     Tabs,
     TabList,
@@ -17,28 +17,44 @@ import {
 } from '@chakra-ui/react'
 import { BsSearch } from 'react-icons/bs'
 import { AiOutlineClose, AiOutlinePlus } from 'react-icons/ai';
-import { GoVerified } from 'react-icons/go'
+import { GoVerified, GoX } from 'react-icons/go'
 import { HiOutlineClipboard } from 'react-icons/hi';
 import { FaPencilAlt } from 'react-icons/fa';
 import { useSelector, useDispatch } from "react-redux";
+import { HiOutlinePrinter } from 'react-icons/hi';
+import { TiWarning } from 'react-icons/ti'
 
 // Custom imports
 import { config } from '../../../environment';
 import { API } from '../../../shared/API';
 import { lightTheme, darkTheme } from '../../../shared/theme';
-import { resetManualOrderList , updateManualOrder , updateManualOrderLoader } from '../../../redux/manualOrderSlice'
+import { resetManualOrderList, updateManualOrder, updateManualOrderLoader } from '../../../redux/manualOrderSlice'
 import CommonLoader from '../../../shared/components/commonLoader';
 import { postMethod } from '../../../redux/HttpRouting/httpRoutingRedux';
 import CommonService from '../../../shared/commonService/commonService';
 import CommonPagination from '../../../shared/components/Pagination/commonPagination';
+import { Confirmation } from '../../../shared/components/confirmation';
+import { resetManualOrder } from '../../../redux/productSlice';
 
 const OrderList = (props) => {
 
     //Variable to handle list titles
-    const listTitle = ['Order no', 'Purchase Amount', 'Order Amount', 'Profit', 'Paid Amount' , 'Progress', 'Edit']
+    const listTitle = ['Order no', 'Purchase Amount', 'Order Amount', 'Discount', 'Final Amount', 'Paid Amount' ,'Profit', 'Progress', 'Edit', 'Print', 'Cancel']
 
     //Variable used to get productlist states from redux
     const commonReducer = useSelector(state => state.commonReducer)
+
+    //Variable used to show toast snackbar
+    const toast = useToast()
+
+    //Variable to handle modal ref
+    const modalRef = useRef();
+
+    // Variable to handle cancel order id
+    const [cancelOrderId, setCancelOrderId] = useState()
+
+    //Variable to handle dialog state
+    const [isCancelOrderDialog, setCancelOrderDialog] = useState(false);
 
     //Variable used to dispatch redux action
     const dispatch = useDispatch()
@@ -66,6 +82,67 @@ const OrderList = (props) => {
     //Handling appcolors based on color mode
     const [appColors, setAppColors] = useState(lightTheme)
 
+    //Variable to handle cancel order dialog props
+    const cancelOrderProps = {
+        title: 'Cancel Order Confirmation',
+        description: 'Are you sure you want to cancel this order?',
+        buttons: [
+            {
+                id: 1,
+                buttonTitle: 'No',
+                confirmation: 'No'
+            },
+            {
+                id: 2,
+                buttonTitle: 'Yes',
+                confirmation: 'Yes',
+                bg: appColors.primary,
+                titleColor: appColors.light
+            }
+        ]
+    }
+
+    //Function to be called while responding to confimration
+    const confirmation = (action) => {
+        setCancelOrderDialog(false);
+        if (action === 'Yes') {
+            onCancelOrder()
+        }
+    }
+
+    // Function to be called while confirming cancel order
+    const onCacelPress = (item) => {
+        setCancelOrderId(item._id)
+        setCancelOrderDialog(true)
+    }
+
+    //Function to be called while cancelling an order
+    const onCancelOrder = () => {
+        console.log('cancel order id', cancelOrderId)
+        dispatch(postMethod({
+            url: API.CANCEL_ORDER,
+            data: {
+                orderId: cancelOrderId
+            }
+        })).unwrap().then((res) => {
+            setCancelOrderId()
+            toast({
+                title: 'Order cancelled successfully',
+                status: 'success',
+                duration: 2000,
+                isClosable: true,
+            })
+        }).catch((err) => {
+            toast({
+                title: 'Failed to cancel order! Try again',
+                describe: err,
+                status: 'error',
+                duration: 2000,
+                isClosable: true,
+            })
+        })
+    }
+
     // Price formatter
     const priceFormatter = useCallback((price) => {
         const formattedPrice = CommonService.priceFormatter(price)
@@ -74,7 +151,8 @@ const OrderList = (props) => {
 
     // Progress Loader Value
     const progressLoaderValue = useCallback((value) => {
-        const progressValue = CommonService.progressLoader({ totalAmount: value.orderAmount, amountPaid: value.paidAmount })
+        console.log('value', value)
+        const progressValue = CommonService.progressLoader({ totalAmount: value.checkoutSummary.finalPrice, amountPaid: value.checkoutSummary.paidAmount })
         return progressValue
     }, [])
 
@@ -104,18 +182,29 @@ const OrderList = (props) => {
     };
 
     //Function to set manualorder list data in reducer
-    const getAllManualOrder = ({ offset = null, limit = null, currentPaymentStatus = null }) => {
+    const getAllManualOrder = ({ offset = null, limit = null, currentPaymentStatus = null , clearSearch = false }) => {
         dispatch(postMethod({
             url: API.GET_ALL_MANUAL_ORDER,
             data: {
                 paymentStatus: (currentPaymentStatus != null ? currentPaymentStatus : value) === 0 ? 'Pending' : 'Paid',
                 offset: offset !== null ? offset * rowsPerPage : page * rowsPerPage,
-                limit: limit !== null ? limit : rowsPerPage
+                limit: limit !== null ? limit : rowsPerPage,
+                search: clearSearch ? '' : search
             }
         })).unwrap().then((res) => {
             dispatch(updateManualOrder(res))
         }).catch((err) => {
             console.log('Manual Order Error', err.message)
+            if(err.message === 'Invalid orderId')
+            {
+                toast({
+                    title: 'Failed to fetch order details!',
+                    description: err.message,
+                    status: 'error',
+                    duration: 5000,
+                    isClosable: true,
+                })
+            }
         })
     }
 
@@ -261,6 +350,8 @@ const OrderList = (props) => {
                     bg={appColors.primary}
                     color={appColors.light}
                     onClick={() => {
+                        dispatch(resetManualOrderList())
+                        dispatch(resetManualOrder())
                         navigation('/addEditManualOrder', { replace: true })
                     }}
                 >
@@ -299,30 +390,53 @@ const OrderList = (props) => {
                                     </Thead>
 
                                     {/* Manual Order List View */}
-                                    {/* {manualOrder?.data?.map((item, index) => {
-                                        return <Tbody>
+                                    {/* ['Order no', 'Purchase Amount', 'Order Amount', 'Final Amount' ,  'Profit', 'Paid Amount' , 'Progress', 'Edit'] */}
+                                    {manualOrder?.data?.map((item, index) => {
+                                        return <Tbody key={index} bg={item?.isCancelled ? 'slategrey' : null}>
                                             <Tr>
+
+                                                {/* Order id */}
                                                 <Td fontFamily={config.fontFamily}>
-                                                    {item.buyedFrom}
+                                                    {item._id}
                                                 </Td>
+
+                                                {/* Purchase price */}
                                                 <Td fontFamily={config.fontFamily}>
-                                                    {item.soldTo}
+                                                    ₹{priceFormatter(item.checkoutSummary.orderPurchasePrice)}
                                                 </Td>
+
+                                                {/* Sales price */}
                                                 <Td fontFamily={config.fontFamily}>
-                                                    ₹{priceFormatter(item?.purchaseValue)}
+                                                    ₹{priceFormatter(item.checkoutSummary.orderSalesPrice)}
                                                 </Td>
+
+                                                {/* Discount */}
+                                                <Td fontFamily={config.fontFamily}>
+                                                    ₹{priceFormatter(item.checkoutSummary.discount)}
+                                                </Td>
+
+                                                {/* Final Price */}
                                                 <Td fontFamily={config.fontFamily} color={appColors.primaryBlue} fontWeight={'semibold'}>
-                                                    ₹{priceFormatter(item?.soldValue)}
+                                                    <Badge p={3} borderRadius={'md'} bg={appColors.gold} color={appColors.dark} minW={70}>
+                                                        ₹{priceFormatter(item.checkoutSummary.finalPrice)}
+                                                    </Badge>
                                                 </Td>
-                                                <Td fontFamily={config.fontFamily} color={appColors.primaryBlue} fontWeight={'semibold'}>
-                                                    ₹{priceFormatter(item?.paidAmount)}
-                                                </Td>
-                                                <Td fontFamily={config.fontFamily} color={appColors.primaryBlue} fontWeight={'semibold'}>
-                                                    ₹{priceFormatter(item?.travelExpense)}
-                                                </Td>
+
+                                                {/* Paid Amount */}
                                                 <Td fontFamily={config.fontFamily} color={appColors.green} fontWeight={'semibold'}>
-                                                    ₹{priceFormatter(item?.profit)}
+                                                    <Badge p={3} borderRadius={'md'} bg={appColors.primary} color={appColors.light} minW={70} textAlign={'center'}>
+                                                        ₹{priceFormatter(item.checkoutSummary.paidAmount)}
+                                                    </Badge>
                                                 </Td>
+
+                                                {/* Profit */}
+                                                <Td fontFamily={config.fontFamily} color={appColors.primaryBlue} fontWeight={'semibold'} textAlign={'center'}>
+                                                    <Badge p={3} borderRadius={'md'} bg={appColors.solidGreen} color={appColors.light} minW={70}>
+                                                        ₹{priceFormatter(item.checkoutSummary.profit)}
+                                                    </Badge>
+                                                </Td>
+                                                
+                                                {/* Progress loader */}
                                                 <Td fontFamily={config.fontFamily}>
                                                     {
                                                         progressLoaderValue(item) >= 100 ?
@@ -340,16 +454,53 @@ const OrderList = (props) => {
                                                             </Box>
                                                     }
                                                 </Td>
+
+                                                {/* Edit icon */}
                                                 <Td fontFamily={config.fontFamily}>
-                                                    <IconButton borderRadius={'full'} bg={'none'} onClick={() => {
-                                                        onEditClicked(item._id)
-                                                    }}>
-                                                        <FaPencilAlt />
+                                                    {
+                                                        item?.isCancelled ?
+                                                            <Tooltip label='Order cancelled no actions can be performed' fontFamily={config.fontFamily} placement='top-end'>
+                                                                <IconButton bg={''} color={appColors.errorColor}>
+                                                                    <TiWarning size={25} />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                            :
+                                                            <IconButton borderRadius={'full'} bg={'none'} onClick={() => {
+                                                                dispatch(resetManualOrderList())
+                                                                dispatch(resetManualOrder())
+                                                                onEditClicked(item._id)
+                                                            }}>
+                                                                <FaPencilAlt />
+                                                            </IconButton>
+                                                    }
+                                                </Td>
+
+                                                {/* Print Bill */}
+                                                <Td fontFamily={config.fontFamily}>
+                                                    <IconButton borderRadius={'full'} bg={'none'}>
+                                                        <HiOutlinePrinter size={25} />
                                                     </IconButton>
                                                 </Td>
+
+                                                {/* Cancel order  */}
+                                                <Td fontFamily={config.fontFamily}>
+                                                    {
+                                                        item.isCancelled ?
+                                                            <Tooltip label='Order cancelled no actions can be performed' fontFamily={config.fontFamily} placement='top-end'>
+                                                                <IconButton bg={''} color={appColors.errorColor}>
+                                                                    <TiWarning size={25} />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                            :
+                                                            <IconButton borderRadius={'full'} bg={'none'} color={appColors.lightRed} onClick={() => { onCacelPress(item) }}>
+                                                                <GoX size={25} />
+                                                            </IconButton>
+                                                    }
+                                                </Td>
+
                                             </Tr>
                                         </Tbody>
-                                    })} */}
+                                    })}
 
                                 </Table>
                             </TableContainer>
@@ -371,6 +522,11 @@ const OrderList = (props) => {
                             </Text>
                         </Center>
             }
+
+            {/* Cancel order confirmation */}
+            <Modal finalFocusRef={modalRef} isOpen={isCancelOrderDialog}>
+                <Confirmation isOpen={isCancelOrderDialog} dialogProps={cancelOrderProps} confirmation={confirmation} />
+            </Modal>
 
 
         </Box >

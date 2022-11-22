@@ -3,7 +3,6 @@ const router = require('express').Router();
 app.use('/authRouter',require('./authRouter'))
 app.use('/userRouter',require('./userRouter'))
 app.use('/commonRouter',require('./commonRouter'))
-app.use('/orderRouter',require('./orderRouter'))
 app.use('/productRouter',require('./productRouter'))
 app.use('/manualOrderRouter',require('./manualOrderRouter'))
 app.use('/expenseRouter',require('./familyRouter'))

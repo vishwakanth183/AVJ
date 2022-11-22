@@ -30,12 +30,9 @@ const createManualOrder = async (req, res) => {
             })
 
             await ManualOrder.create([{
-                sellerName: checkoutData.sellerName,
-                paymentType: checkoutData.paymentType,
-                onlinePaymentType: checkoutData.onlinePaymentType,
                 orderedProducts: checkoutData.orderedProducts,
-                checkoutSummary: { ...checkoutData.checkoutSummary, discount: checkoutData.discount },
-                paymentStatus: checkoutData.paymentType !== 'Pending' ? 'Paid' : 'Unpaid',
+                checkoutSummary: checkoutData.checkoutSummary,
+                isCancelled: checkoutData.isCancelled
             }], { session: session }).then((orderRes) => {
                 console.log('orderRes', orderRes)
                 res.status(statusCodes.success).json('Manual Order Created Successfully')
@@ -56,19 +53,10 @@ module.exports.createManualOrder = createManualOrder
 //Method used to current order by user query
 const getCurrentOrdersByQuery = async (req, res) => {
 
-    let paymentTypeArray = [req.body.paymentStatus];
-    let paymentStatusQuery = req.body.paymentStatus === 'Pending' ? 'Unpaid' : 'Paid';
-
-    // const search = new RegExp(req.body.search)
+    const search = req.body.search
     const offset = req.body.offset ? req.body.offset : 0
     const limit = req.body.limit ? req.body.limit : 100
 
-    if (req.body.paymentStatus === 'Pending') {
-        paymentTypeArray.push('Cancelled')
-    }
-
-
-    // console.log('req.query',req.query)
     let endDate = new Date();
     let startDate;
     if (req.query.currentDay) {
@@ -85,33 +73,24 @@ const getCurrentOrdersByQuery = async (req, res) => {
         startDate = new Date(new Date().getFullYear(), 0, 1)
     }
     console.log(startDate, endDate)
-    // await ManualOrder.aggregate([
-    //     { $match: { createdAt: { $gte: startDate, $lt: startDate ? endDate : null } } },
-    // ]).then(async (orderRes) => {
-    //     await ManualOrder.count({
-    //         createdAt: { $gte: startDate, $lt: startDate ? endDate : null }
-    //     }).then((countRes) => {
-    //         res.status(statusCodes.success).json({
-    //             listData: orderRes,
-    //             totalCount: countRes
-    //         })
-    //     })
-    // })
+
     try {
         await ManualOrder.find(
             {
                 $match: {
-                    createdAt: { $gte: startDate, $lt: startDate ? endDate : null }
+                    createdAt: { $gte: startDate, $lt: startDate ? endDate : null },
                 },
-                // paymentType: { $in: paymentTypeArray }
-                paymentStatus: paymentStatusQuery
+                ...{...search && {_id : search}},
+                $expr: req.body.paymentStatus === "Paid" ? { $gte: ['$checkoutSummary.paidAmount', '$checkoutSummary.finalPrice'] } : { $gt: ['$checkoutSummary.finalPrice', '$checkoutSummary.paidAmount'] }
             },
-        ).skip(offset).limit(limit).then(async (orderRes) => {
+        ).skip(offset).limit(limit).sort({ createdAt: -1 }).then(async (orderRes) => {
             await ManualOrder.count({
-                $match: { createdAt: { $gte: startDate, $lt: startDate ? endDate : null } },
-                // paymentType: { $in: paymentTypeArray }
-                paymentStatus: paymentStatusQuery
-            }).then((countRes) => {
+                $match: {
+                    createdAt: { $gte: startDate, $lt: startDate ? endDate : null },
+                },
+                ...{...search && {_id : search}},
+                $expr: req.body.paymentStatus === "Paid" ? { $gte: ['$checkoutSummary.paidAmount', '$checkoutSummary.finalPrice'] } : { $gt: ['$checkoutSummary.finalPrice', '$checkoutSummary.paidAmount'] }
+            },).then((countRes) => {
                 res.status(statusCodes.success).json({
                     listData: orderRes,
                     totalCount: countRes
@@ -121,7 +100,14 @@ const getCurrentOrdersByQuery = async (req, res) => {
     }
     catch (err) {
         console.log('Order data fetch error', err);
-        res.status(statusCodes.unprocessableEntity).json(err)
+        if(search)
+        {
+            res.status(statusCodes.unprocessableEntity).json('Invalid orderId')
+        }
+        else
+        {
+            res.status(statusCodes.unprocessableEntity).json(err)
+        }
     }
 }
 module.exports.getCurrentOrdersByQuery = getCurrentOrdersByQuery
@@ -139,11 +125,10 @@ const updateManualOrder = async (req, res) => {
         session.startTransaction();
 
         await ManualOrder.findById(req.query.orderId).then(async (singleOrderRes) => {
-            // console.log('singleOrder response', singleOrderRes)
-            // previousData = singleOrderRes.orderedProducts
-            // previousData = singleOrderRes.orderedProducts
+
             if (checkoutData.orderedProducts && checkoutData.orderedProducts.length) {
 
+                // Update deleted products stock
                 singleOrderRes.orderedProducts.map(async (product) => {
                     const isProduct = checkoutData.orderedProducts.find((item) => item._id === product._id)
                     if (!isProduct) {
@@ -151,6 +136,7 @@ const updateManualOrder = async (req, res) => {
                     }
                 })
 
+                // Update existing product and newly added products stock
                 checkoutData.orderedProducts.map(async (product) => {
                     const oldProduct = singleOrderRes.orderedProducts.find((item) => item._id === product._id);
                     if (oldProduct) {
@@ -173,11 +159,9 @@ const updateManualOrder = async (req, res) => {
                     req.query.orderId,
                     {
                         $set: {
-                            sellerName: checkoutData.sellerName,
-                            paymentType: checkoutData.paymentType,
-                            onlinePaymentType: checkoutData.onlinePaymentType,
+                            isCancelled: checkoutData.isCancelled,
+                            checkoutSummary: checkoutData.checkoutSummary,
                             orderedProducts: checkoutData.orderedProducts,
-                            checkoutSummary: {...checkoutData.checkoutSummary , discount: checkoutData.discount}
                         }
                     }
                     , { session: session }).then((orderRes) => {
@@ -249,6 +233,7 @@ const getCurrentProductDetails = ({ productId, quantity }) => {
     return Products.findById(productId).then((productResponse) => {
         let currentProduct = productResponse.toJSON()
         currentProduct['quantity'] = quantity
+        currentProduct['previousQuantity'] = quantity
         return Promise.resolve(currentProduct)
     }).catch((err) => {
         throw new Error(err)
@@ -277,63 +262,40 @@ const updateProductQuantity = async ({ productId, quantity, increment = false })
 
 module.exports.updateProductQuantity = updateProductQuantity
 
-//Method used to current order by user query
-const getPreviousOrdersByQuery = async (req, res) => {
-    console.log('req.query', req.query)
-    let startDate, endDate;
-    if (req.query.previousDay) {
-        startDate = new Date(new Date(new Date().setDate(new Date().getDate() - 1)).setUTCHours(0, 0, 0, 0));
-        endDate = new Date()
-    }
-    else if (req.query.previousWeek) {
-        startDate = new Date(new Date(new Date().setDate(new Date().getDate() - 2 * 7)).setUTCHours(0, 0, 0, 0));
-        endDate = new Date(new Date(new Date().setDate(new Date().getDate() - 7)).setUTCHours(23, 59, 59, 999));
-    }
-    else if (req.query.previousMonth) {
-        startDate = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
-        endDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    }
-    else if (req.query.previousYear) {
-        startDate = new Date(new Date().getFullYear(), 0, 1);
-        endDate = new Date(new Date().getFullYear() - 1, 0, 1);
-    }
-    console.log(startDate, endDate)
-    try {
-        const ManualOrderData = await ManualOrder.aggregate([
-            { $match: { createdAt: { $gte: startDate, $lt: endDate } } },
-        ])
-        res.status(statusCodes.success).json({ orderData: ManualOrderData, count: ManualOrderData.length })
-    }
-    catch (err) {
-        // console.log('Order data fetch error', err);
-        res.status(statusCodes.unprocessableEntity).json('Something wrong happened! Try Again')
-    }
-}
-module.exports.getPreviousOrdersByQuery = getPreviousOrdersByQuery
+//Method used to cancel order
+const cancelOrder = async (req, res) => {
+    console.log('cancel order called')
 
-//Method used to particular time period orders based on user query
-const particularOrdersByQuery = async (req, res) => {
-    console.log('req.query', req.query)
-    let startDate, endDate;
-    if (req.query.particularMonth) {
-        startDate = new Date(new Date().getFullYear(), monthsLong[req.query.particularMonth] - 1, 1);
-        endDate = new Date(new Date().getFullYear(), monthsLong[req.query.particularMonth], 1);
-    }
-    else if (req.query.particularYear) {
-        startDate = new Date(req.query.particularYear, 0, 1);
-        endDate = new Date(req.query.particularYear, 12, 1);
-    }
-    console.log(startDate, endDate)
+    const session = await mydb.startSession();
+
+    const orderId = req.body.orderId;
+
     try {
-        const ManualOrderData = await ManualOrder.aggregate([
-            { $match: { createdAt: { $gte: startDate, $lt: endDate } } },
-        ])
-        res.status(statusCodes.success).json({ orderData: ManualOrderData, count: ManualOrderData.length })
+        session.startTransaction();
+
+        await ManualOrder.findById(orderId).then(async (singleOrderRes) => {
+            // Update deleted products stock
+            singleOrderRes.orderedProducts.map(async (product) => {
+                await updateProductQuantity({ productId: product._id, quantity: product.quantity, increment: true }, { session: session })
+            })
+        })
+
+        await ManualOrder.findByIdAndUpdate(orderId, {
+            $set: { isCancelled: true }
+        })
+
+        res.status(statusCodes.success).json('Order Cancelled Successfully')
+
+        await session.commitTransaction();
+
     }
-    catch (err) {
-        // console.log('Order data fetch error', err);
-        res.status(statusCodes.unprocessableEntity).json('Something wrong happened! Try Again')
+    catch (error) {
+        console.log('cancel order error', error)
+        res.status(statusCodes.unprocessableEntity).json(error)
+        await session.abortTransaction();
     }
+    session.endSession();
 }
-module.exports.particularOrdersByQuery = particularOrdersByQuery
+
+module.exports.cancelOrder = cancelOrder
 

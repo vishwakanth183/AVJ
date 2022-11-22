@@ -13,6 +13,7 @@ import CommonLoader from '../../../../shared/components/commonLoader';
 import SelectedProducts from './selectedProducts';
 import Cart from './cart';
 import Checkout from './checkout';
+import { updateOrderedProducts } from '../../../../redux/productSlice';
 
 // Custom imports
 
@@ -109,11 +110,12 @@ const Stepper = ({ manualOrderDetails, orderId = null }) => {
                     value === 1 ?
                         <Cart
                             setValue={setValue}
+                            orderId = {orderId}
                         />
 
                         :
 
-                        <Checkout />
+                        <Checkout orderDetails={manualOrderDetails} orderId={orderId}/>
             }
 
 
@@ -149,6 +151,7 @@ const DisplayTemplate = () => {
                     }
                 })).unwrap().then((res) => {
                     setManualOrderDetails(res)
+                    dispatch(updateOrderedProducts(res.updatedSelecedProducts))
                     setLoading(false)
                 }).catch((err) => {
                     console.log('Error in getting product details', err)

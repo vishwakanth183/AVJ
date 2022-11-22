@@ -14,7 +14,7 @@ import CommonNumberInput from '../../../../shared/components/commonNumberInput';
 import { AiOutlineClose } from 'react-icons/ai';
 import { BsSearch } from 'react-icons/bs';
 
-const Cart = ({ setValue }) => {
+const Cart = ({ setValue , orderId = null }) => {
 
     //Variable to hold shop image
     const shopImage = require('../../../../assets/images/shopImage.png')
@@ -105,11 +105,19 @@ const Cart = ({ setValue }) => {
 
     // Function to handle cart quantity
     const handleQuantity = ({ value, cartIndex, cartItem }) => {
+
+        let currentQuantity = value;
+
+        if(orderId && cartItems[cartIndex].previousQuantity)
+        {
+            currentQuantity = Math.abs(currentQuantity - cartItems[cartIndex].previousQuantity)
+        }
+
         if (value <= 0.00) {
             setDeleteDialog(true);
             setRemoveProduct(cartItem)
         }
-        else if (value <= cartItem.stock) {
+        else if (currentQuantity <= cartItem.stock) {
             dispatch(updateProductQuantity({ id: cartItem._id, quantity: value }))
         }
         else {
@@ -281,7 +289,7 @@ const Cart = ({ setValue }) => {
 
                                                             {/* Purchase price View */}
                                                             <WrapItem>
-                                                                <Badge bg={'gold'} color={appColors.dark} pl={2} pr={2} pt={1} pb={1} mb={2} mr={2} fontFamily={config.fontFamily} borderRadius={7} textTransform='capitalize'>
+                                                                <Badge bg={appColors.gold} color={appColors.dark} pl={2} pr={2} pt={1} pb={1} mb={2} mr={2} fontFamily={config.fontFamily} borderRadius={7} textTransform='capitalize'>
                                                                     Purchase Price : ₹{priceFormatter(item?.purchasePrice)}
                                                                 </Badge>
                                                             </WrapItem>

@@ -11,6 +11,8 @@ const borderColor = '#ddd'
 const solidGreen = 'green'
 const skyblue = 'skyblue'
 const blackAlpha = 'blackAlpha.100'
+const warning = 'yellow'
+const gold = 'gold'
 
 const lightBlack = 'black.100'
 const lightTeal = 'teal.100'
@@ -51,7 +53,9 @@ export const darkTheme = {
     tabTitle : tabTitle,
     solidGreen : solidGreen,
     skyblue : skyblue,
-    blackAlpha : blackAlpha
+    blackAlpha : blackAlpha,
+    warning : warning,
+    gold : gold
 }
 
 export const lightTheme = {
@@ -81,5 +85,7 @@ export const lightTheme = {
     tabTitle : white,
     solidGreen : solidGreen,
     skyblue : skyblue,
-    blackAlpha : blackAlpha
+    blackAlpha : blackAlpha,
+    warning : warning,
+    gold : gold
 }

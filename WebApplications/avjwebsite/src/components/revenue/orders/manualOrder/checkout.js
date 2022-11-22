@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Badge, Box, ButtonGroup, SimpleGrid, TableCaption, Tag, TagLabel, Tfoot } from '@chakra-ui/react';
+import React, { useState, useEffect, useMemo, useCallback , useRef } from 'react';
+import { Badge, Box, ButtonGroup, SimpleGrid, TableCaption, Tag, TagLabel, Tfoot, useToast , Modal} from '@chakra-ui/react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup'
 import {
-    useMediaQuery, useToast, Button, HStack, FormLabel, Text, FormControl, Textarea, Divider, TableContainer, Table, Th, Td, Tr, Thead, Tbody, IconButton
+    useMediaQuery, Button, HStack, FormLabel, Text, FormControl, Textarea, Divider, TableContainer, Table, Th, Td, Tr, Thead, Tbody, IconButton
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,11 +11,13 @@ import { useDispatch, useSelector } from 'react-redux';
 // Custom imports
 import { API } from '../../../../shared/API';
 import { postMethod, putMethod } from '../../../../redux/HttpRouting/httpRoutingRedux';
+import { resetManualOrder } from '../../../../redux/productSlice'
 import { darkTheme, lightTheme } from '../../../../shared/theme';
 import CommonNumberInput from '../../../../shared/components/commonNumberInput';
 import { config } from '../../../../environment';
 import CommonService from '../../../../shared/commonService/commonService';
 import { HiOutlinePrinter } from 'react-icons/hi';
+import { Confirmation } from '../../../../shared/components/confirmation';
 
 const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }) => {
 
@@ -24,6 +26,7 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
 
     // single media query with no options
     const [isLargerThan700] = useMediaQuery('(min-width: 900px)')
+
 
     //Variable used to dispatch redux action
     const dispatch = useDispatch()
@@ -40,8 +43,73 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
     //Variable used to get productlist states from redux
     const commonReducer = useSelector(state => state.commonReducer)
 
+    //Variable to handle dialog state
+    const [isCancelOrderDialog, setCancelOrderDialog] = useState(false);
+
     //Variable used to show toast snackbar
     const toast = useToast()
+
+    //Variable to handle modal ref
+    const modalRef = useRef();
+
+    //Function be called while clicking cancel order
+    const onCacelPress = () =>{
+        setCancelOrderDialog(true)
+    }
+
+    //Variable to handle cancel order dialog props
+    const cancelOrderProps = {
+        title: 'Cancel Order Confirmation',
+        description: 'Are you sure you want to cancel this order?',
+        buttons: [
+            {
+                id: 1,
+                buttonTitle: 'No',
+                confirmation: 'No'
+            },
+            {
+                id: 2,
+                buttonTitle: 'Yes',
+                confirmation: 'Yes',
+                bg: appColors.primary,
+                titleColor: appColors.light
+            }
+        ]
+    }
+
+    //Function to be called while responding to confimration
+    const confirmation = (action) => {
+        setCancelOrderDialog(false);
+        if (action === 'Yes') {
+            onCancelOrder()
+        }
+    }
+
+     //Function to be called while cancelling an order
+     const onCancelOrder = () => {
+        dispatch(postMethod({
+            url: API.CANCEL_ORDER,
+            data: {
+                orderId: orderId
+            }
+        })).unwrap().then((res) => {
+            toast({
+                title: 'Order cancelled successfully',
+                status: 'success',
+                duration: 2000,
+                isClosable: true,
+            })
+            navigation('/orderList', { replace: true })
+        }).catch((err) => {
+            toast({
+                title: 'Failed to cancel order! Try again',
+                describe: err,
+                status: 'error',
+                duration: 2000,
+                isClosable: true,
+            })
+        })
+    }
 
     //Price formatter
     const priceFormatter = useCallback((price, round = false) => {
@@ -118,17 +186,81 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
         },
         onSubmit: (val) => {
             const checkoutData = {
-                checkoutSummary : {
+                checkoutSummary: {
                     ...summary,
-                    discount : val.discount,
-                    paidAmount : val.paidAmount,
-                    profit : summary.orderSalesPrice - summary.orderPurchasePrice
+                    discount: Number(val.discount),
+                    paidAmount: Number(val.paidAmount),
+                    profit: (summary.orderSalesPrice - summary.orderPurchasePrice) - Number(val.discount),
+                    finalPrice: summary.orderSalesPrice - Number(val.discount)
                 },
-                orderedProducts : productsReducer.selectedProducts
+                orderedProducts: productsReducer.selectedProducts,
+                isCancelled: false
             }
             console.log('checkoutData', checkoutData)
+            if (orderDetails) {
+                // updateLineBusiness(currentlineBusinessDetails)
+                onUpdateManualOrder({checkoutData : checkoutData})
+            }
+            else {
+                onCreateManualOrder({ checkoutData: checkoutData })
+            }
         }
     })
+
+    // Function used to create manual order
+    const onCreateManualOrder = ({ checkoutData }) => {
+        dispatch(postMethod({
+            url: API.CREATE_MANUAL_ORDER,
+            data: {
+                checkoutData: checkoutData
+            }
+        })).unwrap().then((res) => {
+            toast({
+                title: 'Manual Order created successfully',
+                status: 'success',
+                duration: 2000,
+                isClosable: true,
+            })
+            dispatch(resetManualOrder())
+            navigation('/orderList', { replace: true })
+        }).catch((err) => {
+            console.log('Manual order error', err.message)
+            toast({
+                title: 'Failed to create manual order',
+                status: 'error',
+                duration: 2000,
+                isClosable: true,
+            })
+        })
+    }
+
+    // Function to be called while updating manual order
+    const onUpdateManualOrder = ({ checkoutData }) => {
+        dispatch(putMethod({
+            url: API.UPDATE_MANUAL_ORDER,
+            data: {
+                checkoutData: checkoutData
+            },
+            queryParams: { 'orderId': orderId }
+        })).unwrap().then((res) => {
+            console.log('update order', res)
+            toast({
+                title: 'Manual Order updated successfully',
+                status: 'success',
+                duration: 2000,
+                isClosable: true,
+            })
+            dispatch(resetManualOrder())
+            navigation('/orderList', { replace: true })
+        }).catch((err) => {
+            toast({
+                title: 'Failed to update manual order',
+                status: 'error',
+                duration: 2000,
+                isClosable: true,
+            })
+        })
+    }
 
     // UseEffect to update theme
     useEffect(() => {
@@ -157,12 +289,12 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
 
                     {/* Purchase Value */}
                     <Badge bg={appColors.primaryBlue} color={appColors.light} p={5} pt={3} pb={3} mb={2} mr={2} fontFamily={config.fontFamily} borderRadius={'full'} fontWeight='extrabold' fontSize={'medium'}>
-                        Sales Value : ₹{priceFormatter(summary.orderSalesPrice)}
+                        Sales Value : ₹{priceFormatter(summary.orderSalesPrice - Number(formik.values.discount))}
                     </Badge>
 
                     {/* Profit Value */}
                     <Badge bg={appColors.solidGreen} color={appColors.light} p={5} pt={3} pb={3} mb={2} mr={2} fontFamily={config.fontFamily} borderRadius={'full'} fontWeight='extrabold' fontSize={'medium'}>
-                        Profit : ₹{priceFormatter(summary.orderSalesPrice - summary.orderPurchasePrice)}
+                        Profit : ₹{priceFormatter((summary.orderSalesPrice - summary.orderPurchasePrice) - Number(formik.values.discount))}
                     </Badge>
 
                 </Box>
@@ -230,6 +362,21 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
                     >
                         {orderDetails ? 'Update Order' : 'Create Order'}
                     </Button>
+
+                    {/* Cancel order button view */}
+                    {orderDetails && <Button
+                        fontFamily={config.fontFamily}
+                        bg={appColors.lightRed}
+                        color={appColors.light}
+                        mt={5}
+                        mr={5}
+                        w={150}
+                        onClick={() => {
+                            onCacelPress()
+                        }}
+                    >
+                        {'Cancel Order'}
+                    </Button>}
 
                 </ButtonGroup>
             </Box>
@@ -373,10 +520,35 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
                             </Td>
                         </Tr>
 
+                        {/* Discount */}
+                        <Tr color={appColors.light} bg={appColors.primaryBlue}>
+                            <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                DISCOUNT
+                            </Td>
+                            <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                ₹{priceFormatter(formik.values.discount)}
+                            </Td>
+                        </Tr>
+
+                        {/* Final Price*/}
+                        <Tr color={appColors.light} bg={appColors.solidGreen}>
+                            <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                FINAL PRICE
+                            </Td>
+                            <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                ₹{priceFormatter(summary.orderSalesPrice - Number(formik.values.discount))}
+                            </Td>
+                        </Tr>
+
                     </Tfoot>
 
                 </Table>
             </TableContainer>
+
+            {/* Cancel order confirmation */}
+            <Modal finalFocusRef={modalRef} isOpen={isCancelOrderDialog}>
+                <Confirmation isOpen={isCancelOrderDialog} dialogProps={cancelOrderProps} confirmation={confirmation} />
+            </Modal>
 
         </Box>
     );
