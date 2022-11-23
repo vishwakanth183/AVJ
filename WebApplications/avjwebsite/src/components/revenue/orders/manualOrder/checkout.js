@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useMemo, useCallback , useRef } from 'react';
-import { Badge, Box, ButtonGroup, SimpleGrid, TableCaption, Tag, TagLabel, Tfoot, useToast , Modal} from '@chakra-ui/react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Badge, Box, ButtonGroup, SimpleGrid, TableCaption, Tag, TagLabel, Tfoot, useToast, Modal, Center } from '@chakra-ui/react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup'
 import {
-    useMediaQuery, Button, HStack, FormLabel, Text, FormControl, Textarea, Divider, TableContainer, Table, Th, Td, Tr, Thead, Tbody, IconButton
+    useMediaQuery, Button, HStack, Image, FormLabel, Text, FormControl, Textarea, Divider, TableContainer, Table, Th, Td, Tr, Thead, Tbody, IconButton
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux';
+import ReactToPrint, { useReactToPrint } from 'react-to-print'
 
 // Custom imports
 import { API } from '../../../../shared/API';
@@ -18,15 +19,21 @@ import { config } from '../../../../environment';
 import CommonService from '../../../../shared/commonService/commonService';
 import { HiOutlinePrinter } from 'react-icons/hi';
 import { Confirmation } from '../../../../shared/components/confirmation';
+import { ComponentToPrint } from '../../../../shared/components/ComponentToPrint';
 
 const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }) => {
 
+    // Variable to handle shop image
+    const shopImage = require('../../../../assets/images/shopImage.png')
+
     //Variable to handle list titles
-    const listTitle = ['PRODUCT NAME', 'BRAND', "VARIANT", 'CGST', 'SGST', 'AMOUNT', 'QUANTITY', 'TOTAL']
+    const listTitle = ['PRODUCT NAME', 'BRAND', "VARIANT", 'CGST', 'SGST', 'AMOUNT', 'QUANTITY', 'WEIGHT UNIT', 'TOTAL']
 
     // single media query with no options
     const [isLargerThan700] = useMediaQuery('(min-width: 900px)')
 
+    //Variable to maintain printer ref
+    const printerRef = useRef()
 
     //Variable used to dispatch redux action
     const dispatch = useDispatch()
@@ -53,7 +60,7 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
     const modalRef = useRef();
 
     //Function be called while clicking cancel order
-    const onCacelPress = () =>{
+    const onCacelPress = () => {
         setCancelOrderDialog(true)
     }
 
@@ -85,8 +92,8 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
         }
     }
 
-     //Function to be called while cancelling an order
-     const onCancelOrder = () => {
+    //Function to be called while cancelling an order
+    const onCancelOrder = () => {
         dispatch(postMethod({
             url: API.CANCEL_ORDER,
             data: {
@@ -181,8 +188,9 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
     const formik = useFormik({
         validationSchema: validationSchema,
         initialValues: {
-            discount: orderDetails?.discount ? orderDetails.discount : 0,
-            paidAmount: orderDetails?.paidAmount ? orderDetails.paidAmount : 0,
+            discount: orderDetails?.checkoutSummary?.discount ? orderDetails?.checkoutSummary?.discount : 0,
+            paidAmount: orderDetails?.checkoutSummary?.paidAmount ? orderDetails?.checkoutSummary?.paidAmount : 0,
+            description: orderDetails?.checkoutSummary?.description ? orderDetails.checkoutSummary.description : ''
         },
         onSubmit: (val) => {
             const checkoutData = {
@@ -190,6 +198,7 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
                     ...summary,
                     discount: Number(val.discount),
                     paidAmount: Number(val.paidAmount),
+                    description: val.description,
                     profit: (summary.orderSalesPrice - summary.orderPurchasePrice) - Number(val.discount),
                     finalPrice: summary.orderSalesPrice - Number(val.discount)
                 },
@@ -199,7 +208,7 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
             console.log('checkoutData', checkoutData)
             if (orderDetails) {
                 // updateLineBusiness(currentlineBusinessDetails)
-                onUpdateManualOrder({checkoutData : checkoutData})
+                onUpdateManualOrder({ checkoutData: checkoutData })
             }
             else {
                 onCreateManualOrder({ checkoutData: checkoutData })
@@ -262,6 +271,12 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
         })
     }
 
+    //Function to handle printer
+    const handlePrint = useReactToPrint({
+        content: () => printerRef.current,
+        documentTitle: 'AVJ HARDWARES'
+    });
+
     // UseEffect to update theme
     useEffect(() => {
         if (commonReducer.appTheme === 'light') {
@@ -276,6 +291,9 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
 
     return (
         <Box>
+
+            {/* Printer View */}
+            <ComponentToPrint ref={printerRef} />
 
             <FormControl isRequired pl={5} pr={5} mb={10}>
 
@@ -326,6 +344,18 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
                             <Text fontFamily={config.fontFamily} color={appColors.errorColor}>{formik.errors.paidAmount}</Text> : null}
                     </Box>
 
+                    {/* Description view */}
+                    <Box>
+                        <FormLabel color={appColors.formTitle} fontFamily={config.fontFamily} fontSize='lg' fontWeight={'semibold'} mb={5}>{'Description'}</FormLabel>
+                        <Textarea
+                            value={formik.values.description}
+                            fontFamily={config.fontFamily}
+                            placeholder='Enter your description'
+                            onBlur={formik.handleBlur('description')}
+                            onChange={formik.handleChange('description')}
+                        />
+                    </Box>
+
                 </SimpleGrid>
 
             </FormControl>
@@ -345,6 +375,7 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
                         mr={5}
                         w={150}
                         rightIcon={<HiOutlinePrinter />}
+                        onClick={handlePrint}
                     >
                         {'Print Bill'}
                     </Button>
@@ -357,7 +388,7 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
                         mt={5}
                         mr={5}
                         w={150}
-                        disabled={!formik.isValid}
+                        disabled={!formik.isValid || !productsReducer.selectedProducts.length}
                         onClick={formik.handleSubmit}
                     >
                         {orderDetails ? 'Update Order' : 'Create Order'}
@@ -381,169 +412,236 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
                 </ButtonGroup>
             </Box>
 
-            {/* List of ordered products */}
-            <TableContainer mt={5} mb={5}>
+            {/* Print Bill View */}
+            <Box ref={printerRef} id={'hi'}>
 
-                <Table>
+                <Divider mt={5} mb={5} />
 
-                    <TableCaption fontFamily={config.fontFamily}>Ordered Products</TableCaption>
+                {/* Shop Details View */}
+                <HStack>
 
-                    {/* Table header view */}
-                    <Thead bg={appColors.dark}>
-                        <Tr>
-                            {listTitle.map((header, headerIndex) => {
-                                return <Th
-                                    key={headerIndex}
-                                    fontFamily={config.fontFamily}
-                                    fontSize={'md'}
-                                    color={appColors.light}
-                                    fontWeight={'thin'}
-                                >
-                                    {header}
-                                </Th>
-                            })}
-                        </Tr>
-                    </Thead>
+                    {/* image view */}
+                    <Image
+                        src={shopImage}
+                        height={200}
+                        width={200}
+                        marginRight={5}
+                    />
 
-                    {/* Table row items view */}
-                    <Tbody>
-                        {
-                            productsReducer?.selectedProducts?.map((item, index) => {
-                                return <Tr key={index}>
+                    {/* Right View */}
+                    <Box>
 
-                                    {/* Product name */}
-                                    <Td fontFamily={config.fontFamily}>
-                                        {item.productName}
-                                    </Td>
+                        {/* Address View */}
+                        <Text fontFamily={config.fontFamily} fontWeight={'semibold'} fontSize={'2xl'}>
+                            Address : {'Abdul Rahman Mudhalali Nagar , (Near PMS ITI) , Trichendur main road , V.M.Chatram'}
+                        </Text>
 
-                                    {/* Brand name */}
-                                    <Td fontFamily={config.fontFamily}>
-                                        <Badge colorScheme='green' pl={2} pr={2} pt={1} pb={1} mb={2} mr={2} fontFamily={config.fontFamily} borderRadius={7}>
-                                            {item?.brandName}
-                                        </Badge>
-                                    </Td>
+                        {/* Contact View */}
+                        <Text fontFamily={config.fontFamily} fontWeight={'semibold'} fontSize={'large'} mt={5}>
+                            Contact No: {'7373599919 , 9788493229'}
+                        </Text>
 
-                                    {/* Lable array */}
-                                    <Td fontFamily={config.fontFamily}>
-                                        <Box>
-                                            {item?.labelArray?.length ?
-                                                item?.labelArray?.map((labelItem, labelIndex) => {
-                                                    return <Tag
-                                                        size={'md'}
-                                                        key={labelIndex}
-                                                        fontFamily={config.fontFamily}
-                                                        borderRadius='full'
-                                                        variant='solid'
-                                                        colorScheme={'purple'}
-                                                        p={1}
-                                                        mt={2}
-                                                        display={'flex'}
-                                                        flexDirection={'column'}
-                                                    >
-                                                        <TagLabel>{labelItem}</TagLabel>
-                                                    </Tag>
-                                                })
-                                                : <Text fontFamily={config.fontFamily} pl={50}>-</Text>}
-                                        </Box>
-                                    </Td>
+                    </Box>
 
-                                    {/* CGST */}
-                                    <Td fontFamily={config.fontFamily}>
-                                        ₹{priceFormatter(item.cgst)}
-                                    </Td>
+                </HStack>
 
-                                    {/* SGST */}
-                                    <Td fontFamily={config.fontFamily}>
-                                        ₹{priceFormatter(item.sgst)}
-                                    </Td>
+                <Divider mt={5} mb={5} />
 
-                                    {/* Sales Price */}
-                                    <Td fontFamily={config.fontFamily}>
-                                        ₹{priceFormatter(item.salesPrice)}
-                                    </Td>
+                {/* OrderId View */}
+                {
+                    orderId ?
+                        <Box>
 
-                                    {/* Quanity */}
-                                    <Td fontFamily={config.fontFamily} pl={50}>
-                                        {priceFormatter(item.quantity)}
-                                    </Td>
+                            <Text fontFamily={config.fontFamily} fontWeight={'bold'} fontSize='2xl' ml={5}>
+                                # ORDERID : {orderId}
+                            </Text>
 
-                                    {/* Total */}
-                                    <Td fontFamily={config.fontFamily}>
-                                        ₹{priceFormatter(item.salesPrice * item.quantity)}
-                                    </Td>
+                            {config.cgstNo ?
+                                <Text fontFamily={config.fontFamily} fontWeight={'bold'} fontSize='2xl' ml={5} mt={5}>
+                                    # CGST NO : {config.cgstNo}
+                                </Text> : null
+                            }
+                        </Box>
+                        : null
+                }
 
-                                </Tr>
-                            })
-                        }
-                    </Tbody>
+                <Divider mt={5} mb={5} />
 
-                    {/* Table Footer */}
-                    <Tfoot bg={appColors.dark}>
+                {/* List of ordered products */}
+                <TableContainer mt={5} mb={5} >
 
-                        {/* Subtotal View*/}
-                        <Tr color={appColors.light}>
-                            <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
-                                SUB TOTAL
-                            </Td>
-                            <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
-                                ₹{priceFormatter(summary.subtotal)}
-                            </Td>
-                        </Tr>
+                    <Table>
 
-                        {/* CGST View*/}
-                        <Tr color={appColors.light}>
-                            <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
-                                CGST
-                            </Td>
-                            <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
-                                ₹{priceFormatter(summary.cgst)}
-                            </Td>
-                        </Tr>
+                        <TableCaption fontFamily={config.fontFamily}>AVJ Hardwares</TableCaption>
 
-                        {/* SGST View*/}
-                        <Tr color={appColors.light}>
-                            <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
-                                SGST
-                            </Td>
-                            <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
-                                ₹{priceFormatter(summary.sgst)}
-                            </Td>
-                        </Tr>
+                        {/* Table header view */}
+                        <Thead bg={appColors.dark}>
+                            <Tr>
+                                {listTitle.map((header, headerIndex) => {
+                                    return <Th
+                                        key={headerIndex}
+                                        fontFamily={config.fontFamily}
+                                        fontSize={'md'}
+                                        color={appColors.light}
+                                        fontWeight={'thin'}
+                                    >
+                                        {header}
+                                    </Th>
+                                })}
+                            </Tr>
+                        </Thead>
 
-                        {/* Grand Total */}
-                        <Tr color={appColors.light}>
-                            <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
-                                GRAND TOTAL
-                            </Td>
-                            <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
-                                ₹{priceFormatter(summary.orderSalesPrice + summary.cgst + summary.sgst)}
-                            </Td>
-                        </Tr>
+                        {/* Table row items view */}
+                        <Tbody>
+                            {
+                                productsReducer?.selectedProducts?.map((item, index) => {
+                                    return <Tr key={index}>
 
-                        {/* Discount */}
-                        <Tr color={appColors.light} bg={appColors.primaryBlue}>
-                            <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
-                                DISCOUNT
-                            </Td>
-                            <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
-                                ₹{priceFormatter(formik.values.discount)}
-                            </Td>
-                        </Tr>
+                                        {/* Product name */}
+                                        <Td fontFamily={config.fontFamily}>
+                                            {item.productName}
+                                        </Td>
 
-                        {/* Final Price*/}
-                        <Tr color={appColors.light} bg={appColors.solidGreen}>
-                            <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
-                                FINAL PRICE
-                            </Td>
-                            <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
-                                ₹{priceFormatter(summary.orderSalesPrice - Number(formik.values.discount))}
-                            </Td>
-                        </Tr>
+                                        {/* Brand name */}
+                                        <Td fontFamily={config.fontFamily}>
+                                            <Badge colorScheme='green' pl={2} pr={2} pt={1} pb={1} mb={2} mr={2} fontFamily={config.fontFamily} borderRadius={7}>
+                                                {item?.brandName}
+                                            </Badge>
+                                        </Td>
 
-                    </Tfoot>
+                                        {/* Lable array */}
+                                        <Td fontFamily={config.fontFamily}>
+                                            <Box>
+                                                {item?.labelArray?.length ?
+                                                    item?.labelArray?.map((labelItem, labelIndex) => {
+                                                        return <Tag
+                                                            size={'md'}
+                                                            key={labelIndex}
+                                                            fontFamily={config.fontFamily}
+                                                            borderRadius='full'
+                                                            variant='solid'
+                                                            colorScheme={'purple'}
+                                                            p={1}
+                                                            mt={2}
+                                                            display={'flex'}
+                                                            flexDirection={'column'}
+                                                        >
+                                                            <TagLabel>{labelItem}</TagLabel>
+                                                        </Tag>
+                                                    })
+                                                    : <Text fontFamily={config.fontFamily} pl={50}>-</Text>}
+                                            </Box>
+                                        </Td>
 
-                </Table>
-            </TableContainer>
+                                        {/* CGST */}
+                                        <Td fontFamily={config.fontFamily}>
+                                            ₹{priceFormatter(item.cgst)}
+                                        </Td>
+
+                                        {/* SGST */}
+                                        <Td fontFamily={config.fontFamily}>
+                                            ₹{priceFormatter(item.sgst)}
+                                        </Td>
+
+                                        {/* Sales Price */}
+                                        <Td fontFamily={config.fontFamily}>
+                                            ₹{priceFormatter(item.salesPrice)}
+                                        </Td>
+
+                                        {/* Quanity */}
+                                        <Td fontFamily={config.fontFamily} pl={50}>
+                                            {priceFormatter(item.quantity)}
+                                        </Td>
+
+                                        {/* Weight Unit */}
+                                        <Td fontFamily={config.fontFamily}>
+                                            {item.weightUnit}
+                                        </Td>
+
+                                        {/* Total */}
+                                        <Td fontFamily={config.fontFamily}>
+                                            ₹{priceFormatter(item.salesPrice * item.quantity)}
+                                        </Td>
+
+                                    </Tr>
+                                })
+                            }
+                        </Tbody>
+
+                        {/* Table Footer */}
+                        <Tfoot bg={appColors.dark}>
+
+                            {/* Subtotal View*/}
+                            <Tr color={appColors.light}>
+                                <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                    SUB TOTAL
+                                </Td>
+                                <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                    ₹{priceFormatter(summary.subtotal)}
+                                </Td>
+                            </Tr>
+
+                            {/* CGST View*/}
+                            <Tr color={appColors.light}>
+                                <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                    CGST
+                                </Td>
+                                <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                    ₹{priceFormatter(summary.cgst)}
+                                </Td>
+                            </Tr>
+
+                            {/* SGST View*/}
+                            <Tr color={appColors.light}>
+                                <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                    SGST
+                                </Td>
+                                <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                    ₹{priceFormatter(summary.sgst)}
+                                </Td>
+                            </Tr>
+
+                            {/* Grand Total */}
+                            <Tr color={appColors.light}>
+                                <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                    GRAND TOTAL
+                                </Td>
+                                <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                    ₹{priceFormatter(summary.orderSalesPrice + summary.cgst + summary.sgst)}
+                                </Td>
+                            </Tr>
+
+                            {/* Discount */}
+                            {
+                                Number(formik.values.discount) ?
+                                    <Tr color={appColors.light} bg={appColors.primaryBlue}>
+                                        <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                            DISCOUNT
+                                        </Td>
+                                        <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                            ₹{priceFormatter(formik.values.discount)}
+                                        </Td>
+                                    </Tr>
+                                    : null
+                            }
+
+                            {/* Final Price*/}
+                            <Tr color={appColors.light} bg={appColors.solidGreen}>
+                                <Td colSpan={listTitle.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                    FINAL PRICE
+                                </Td>
+                                <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                    ₹{priceFormatter(summary.orderSalesPrice - Number(formik.values.discount))}
+                                </Td>
+                            </Tr>
+
+                        </Tfoot>
+
+                    </Table>
+                </TableContainer>
+
+            </Box>
+            {/* </div> */}
 
             {/* Cancel order confirmation */}
             <Modal finalFocusRef={modalRef} isOpen={isCancelOrderDialog}>

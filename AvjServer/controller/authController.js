@@ -42,7 +42,7 @@ const login = async(credentials) =>{
             email : user.email,
             phno : user.phno,
             role : user.role
-        },process.env.JWT_KEY,{expiresIn : '1hr'})
+        },process.env.JWT_KEY,{expiresIn : '1d'})
         return {userDetails : user , accessToken : token}
     }
     catch(error)

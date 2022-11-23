@@ -166,7 +166,7 @@ const updateManualOrder = async (req, res) => {
                     }
                     , { session: session }).then((orderRes) => {
                         console.log('orderRes', orderRes)
-                        res.status(statusCodes.success).json('Manual Order Created Successfully')
+                        res.status(statusCodes.success).json('Manual Order Updated Successfully')
                     })
 
                 await session.commitTransaction();

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom'
-import { Badge, Box, Center, Modal, useToast, Tooltip } from '@chakra-ui/react';
+import { Badge, Box, Center, Modal, useToast, Tooltip, Textarea } from '@chakra-ui/react';
 import {
     Tabs,
     TabList,
@@ -13,7 +13,7 @@ import {
     Th,
     Td,
     TableCaption,
-    TableContainer, useMediaQuery, Button, HStack, InputGroup, Input, ButtonGroup, InputRightElement, IconButton, CircularProgress, CircularProgressLabel
+    TableContainer, useMediaQuery, Button, HStack, InputGroup, Input, ButtonGroup, InputRightElement, IconButton, CircularProgress, CircularProgressLabel, Image, Divider, Tag, TagLabel, Tfoot
 } from '@chakra-ui/react'
 import { BsSearch } from 'react-icons/bs'
 import { AiOutlineClose, AiOutlinePlus } from 'react-icons/ai';
@@ -23,6 +23,7 @@ import { FaPencilAlt } from 'react-icons/fa';
 import { useSelector, useDispatch } from "react-redux";
 import { HiOutlinePrinter } from 'react-icons/hi';
 import { TiWarning } from 'react-icons/ti'
+import ReactToPrint, { useReactToPrint } from 'react-to-print'
 
 // Custom imports
 import { config } from '../../../environment';
@@ -35,11 +36,19 @@ import CommonService from '../../../shared/commonService/commonService';
 import CommonPagination from '../../../shared/components/Pagination/commonPagination';
 import { Confirmation } from '../../../shared/components/confirmation';
 import { resetManualOrder } from '../../../redux/productSlice';
+import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
+import { ComponentToPrint } from '../../../shared/components/ComponentToPrint';
 
 const OrderList = (props) => {
 
     //Variable to handle list titles
-    const listTitle = ['Order no', 'Purchase Amount', 'Order Amount', 'Discount', 'Final Amount', 'Paid Amount' ,'Profit', 'Progress', 'Edit', 'Print', 'Cancel']
+    const listTitle = ['Order no', 'Purchase Amount', 'Order Amount', 'Discount', 'Final Amount', 'Paid Amount', 'Profit', 'Details', 'Progress', 'Edit', 'Cancel', 'Description']
+
+    // Variable to handle shop image
+    const shopImage = require('../../../assets/images/shopImage.png')
+
+    //Variable to handle list titles
+    const printerTable = ['PRODUCT NAME', 'BRAND', "VARIANT", 'CGST', 'SGST', 'AMOUNT', 'QUANTITY', 'WEIGHT UNIT', 'TOTAL']
 
     //Variable used to get productlist states from redux
     const commonReducer = useSelector(state => state.commonReducer)
@@ -55,6 +64,9 @@ const OrderList = (props) => {
 
     //Variable to handle dialog state
     const [isCancelOrderDialog, setCancelOrderDialog] = useState(false);
+
+    // Variable to handle selected index
+    const [selectedIndex, setSelectedIndex] = useState();
 
     //Variable used to dispatch redux action
     const dispatch = useDispatch()
@@ -156,7 +168,11 @@ const OrderList = (props) => {
         return progressValue
     }, [])
 
-
+    //Function to handle printer
+    const handlePrint = useReactToPrint({
+        content: () => document.getElementById('orderPrint'),
+        documentTitle: 'AVJ HARDWARES'
+    });
 
     //Function to be called while clearing search
     const onClearSearch = () => {
@@ -182,7 +198,7 @@ const OrderList = (props) => {
     };
 
     //Function to set manualorder list data in reducer
-    const getAllManualOrder = ({ offset = null, limit = null, currentPaymentStatus = null , clearSearch = false }) => {
+    const getAllManualOrder = ({ offset = null, limit = null, currentPaymentStatus = null, clearSearch = false }) => {
         dispatch(postMethod({
             url: API.GET_ALL_MANUAL_ORDER,
             data: {
@@ -195,8 +211,7 @@ const OrderList = (props) => {
             dispatch(updateManualOrder(res))
         }).catch((err) => {
             console.log('Manual Order Error', err.message)
-            if(err.message === 'Invalid orderId')
-            {
+            if (err.message === 'Invalid orderId') {
                 toast({
                     title: 'Failed to fetch order details!',
                     description: err.message,
@@ -212,6 +227,255 @@ const OrderList = (props) => {
     const onEditClicked = (id) => {
         dispatch(resetManualOrderList())
         navigation('/addEditManualOrder', { replace: true, state: { orderId: id } });
+    }
+
+    // Template to display selected order printer view
+    const PrinterView = ({ item, index }) => {
+        return (
+            <Box key={index}>
+
+                <Button
+                    fontFamily={config.fontFamily}
+                    bg={appColors.dark}
+                    color={appColors.light}
+                    mt={5}
+                    mr={5}
+                    w={150}
+                    rightIcon={<HiOutlinePrinter />}
+                    onClick={handlePrint}
+                >
+                    {'Print Bill'}
+                </Button>
+
+                {/* Printer details */}
+                <Box id='orderPrint'>
+
+                    <Divider mt={5} mb={5} />
+
+                    {/* Shop Details View */}
+                    <HStack>
+
+                        {/* image view */}
+                        <Image
+                            src={shopImage}
+                            height={200}
+                            width={200}
+                            marginRight={5}
+                        />
+
+                        {/* Right View */}
+                        <Box>
+
+                            {/* Address View */}
+                            <Text fontFamily={config.fontFamily} fontWeight={'semibold'} fontSize={'2xl'}>
+                                Address : {config.address}
+                            </Text>
+
+                            {/* Contact View */}
+                            <Text fontFamily={config.fontFamily} fontWeight={'semibold'} fontSize={'large'} mt={5}>
+                                Contact No: {config.contactNo}
+                            </Text>
+
+                        </Box>
+
+                    </HStack>
+
+                    <Divider mt={5} mb={5} />
+
+                    {/* OrderId View */}
+
+                    <Box>
+
+                        <Text fontFamily={config.fontFamily} fontWeight={'bold'} fontSize='2xl' ml={5}>
+                            # ORDERID : {item?._id}
+                        </Text>
+
+                        {config.cgstNo ?
+                            <Text fontFamily={config.fontFamily} fontWeight={'bold'} fontSize='2xl' ml={5} mt={5}>
+                                # CGST NO : {config.cgstNo}
+                            </Text> : null
+                        }
+                    </Box>
+
+                    <Divider mt={5} mb={5} />
+
+                    {/* PRINTER VIEW ORDERED PRODUCTS */}
+
+                    <TableContainer mt={5} mb={5} >
+
+                        <Table>
+
+                            <TableCaption fontFamily={config.fontFamily}>AVJ Hardwares</TableCaption>
+
+                            {/* Table header view */}
+                            <Thead bg={appColors.dark}>
+                                <Tr>
+                                    {printerTable.map((header, headerIndex) => {
+                                        return <Th
+                                            key={headerIndex}
+                                            fontFamily={config.fontFamily}
+                                            fontSize={'md'}
+                                            color={appColors.light}
+                                            fontWeight={'thin'}
+                                        >
+                                            {header}
+                                        </Th>
+                                    })}
+                                </Tr>
+                            </Thead>
+
+                            {/* Table row items view */}
+                            <Tbody>
+                                {
+                                    item?.orderedProducts?.map((orderItem, productIndex) => {
+                                        return <Tr key={productIndex}>
+
+                                            {/* Product name */}
+                                            <Td fontFamily={config.fontFamily}>
+                                                {orderItem.productName}
+                                            </Td>
+
+                                            {/* Brand name */}
+                                            <Td fontFamily={config.fontFamily}>
+                                                <Badge colorScheme='green' pl={2} pr={2} pt={1} pb={1} mb={2} mr={2} fontFamily={config.fontFamily} borderRadius={7}>
+                                                    {orderItem?.brandName}
+                                                </Badge>
+                                            </Td>
+
+                                            {/* Lable array */}
+                                            <Td fontFamily={config.fontFamily}>
+                                                <Box>
+                                                    {orderItem?.labelArray?.length ?
+                                                        orderItem?.labelArray?.map((labelItem, labelIndex) => {
+                                                            return <Tag
+                                                                size={'md'}
+                                                                key={labelIndex}
+                                                                fontFamily={config.fontFamily}
+                                                                borderRadius='full'
+                                                                variant='solid'
+                                                                colorScheme={'purple'}
+                                                                p={1}
+                                                                mt={2}
+                                                                display={'flex'}
+                                                                flexDirection={'column'}
+                                                            >
+                                                                <TagLabel>{labelItem}</TagLabel>
+                                                            </Tag>
+                                                        })
+                                                        : <Text fontFamily={config.fontFamily} pl={50}>-</Text>}
+                                                </Box>
+                                            </Td>
+
+                                            {/* CGST */}
+                                            <Td fontFamily={config.fontFamily}>
+                                                ₹{priceFormatter(orderItem.cgst)}
+                                            </Td>
+
+                                            {/* SGST */}
+                                            <Td fontFamily={config.fontFamily}>
+                                                ₹{priceFormatter(orderItem.sgst)}
+                                            </Td>
+
+                                            {/* Sales Price */}
+                                            <Td fontFamily={config.fontFamily}>
+                                                ₹{priceFormatter(orderItem.salesPrice)}
+                                            </Td>
+
+                                            {/* Quanity */}
+                                            <Td fontFamily={config.fontFamily} pl={50}>
+                                                {priceFormatter(orderItem.quantity)}
+                                            </Td>
+
+                                            {/* Weight Unit */}
+                                            <Td fontFamily={config.fontFamily}>
+                                                {orderItem.weightUnit}
+                                            </Td>
+
+                                            {/* Total */}
+                                            <Td fontFamily={config.fontFamily}>
+                                                ₹{priceFormatter(orderItem.salesPrice * orderItem.quantity)}
+                                            </Td>
+
+                                        </Tr>
+                                    })
+                                }
+                            </Tbody>
+
+                            {/* Table Footer */}
+                            <Tfoot bg={appColors.dark}>
+
+                                {/* Subtotal View*/}
+                                <Tr color={appColors.light}>
+                                    <Td colSpan={printerTable.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                        SUB TOTAL
+                                    </Td>
+                                    <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                        ₹{priceFormatter(item.checkoutSummary.subtotal)}
+                                    </Td>
+                                </Tr>
+
+                                {/* CGST View*/}
+                                <Tr color={appColors.light}>
+                                    <Td colSpan={printerTable.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                        CGST
+                                    </Td>
+                                    <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                        ₹{priceFormatter(item.checkoutSummary.cgst)}
+                                    </Td>
+                                </Tr>
+
+                                {/* SGST View*/}
+                                <Tr color={appColors.light}>
+                                    <Td colSpan={printerTable.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                        SGST
+                                    </Td>
+                                    <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                        ₹{priceFormatter(item.checkoutSummary.sgst)}
+                                    </Td>
+                                </Tr>
+
+                                {/* Grand Total */}
+                                <Tr color={appColors.light}>
+                                    <Td colSpan={printerTable.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                        GRAND TOTAL
+                                    </Td>
+                                    <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                        ₹{priceFormatter(item.checkoutSummary.orderSalesPrice + item.checkoutSummary.cgst + item.checkoutSummary.sgst)}
+                                    </Td>
+                                </Tr>
+
+                                {/* Discount */}
+                                {
+                                    Number(item.checkoutSummary.discount) ?
+                                        <Tr color={appColors.light} bg={appColors.primaryBlue}>
+                                            <Td colSpan={printerTable.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                                DISCOUNT
+                                            </Td>
+                                            <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                                ₹{priceFormatter(item.checkoutSummary.discount)}
+                                            </Td>
+                                        </Tr>
+                                        : null
+                                }
+
+                                {/* Final Price*/}
+                                <Tr color={appColors.light} bg={appColors.solidGreen}>
+                                    <Td colSpan={printerTable.length - 1} fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                        FINAL PRICE
+                                    </Td>
+                                    <Td fontFamily={config.fontFamily} fontWeight={'semibold'}>
+                                        ₹{priceFormatter(item.checkoutSummary.orderSalesPrice - Number(item.checkoutSummary.discount))}
+                                    </Td>
+                                </Tr>
+
+                            </Tfoot>
+
+                        </Table>
+                    </TableContainer>
+                </Box>
+
+            </Box>
+        )
     }
 
     // UseEffect to update theme
@@ -246,6 +510,8 @@ const OrderList = (props) => {
     return (
         <Box>
 
+            {/* Printer View */}
+            <ComponentToPrint />
 
             <Box display={'flex'} flexDirection={'row'} mt={5} mb={5}>
                 <Text fontSize={'4xl'} fontFamily={config.fontFamily} pl={5} fontWeight={'semibold'}>
@@ -435,7 +701,25 @@ const OrderList = (props) => {
                                                         ₹{priceFormatter(item.checkoutSummary.profit)}
                                                     </Badge>
                                                 </Td>
-                                                
+
+                                                {/* Details view */}
+                                                <Td fontFamily={config.fontFamily}>
+                                                    <IconButton borderRadius={'full'} bg={'none'} onClick={() => {
+                                                        if (selectedIndex === index) {
+                                                            setSelectedIndex(null)
+                                                        }
+                                                        else {
+                                                            setSelectedIndex(index)
+                                                        }
+                                                    }}>
+                                                        {
+                                                            selectedIndex === index ?
+                                                                <BiChevronUp size={25} /> :
+                                                                <BiChevronDown size={25} />
+                                                        }
+                                                    </IconButton>
+                                                </Td>
+
                                                 {/* Progress loader */}
                                                 <Td fontFamily={config.fontFamily}>
                                                     {
@@ -475,13 +759,6 @@ const OrderList = (props) => {
                                                     }
                                                 </Td>
 
-                                                {/* Print Bill */}
-                                                <Td fontFamily={config.fontFamily}>
-                                                    <IconButton borderRadius={'full'} bg={'none'}>
-                                                        <HiOutlinePrinter size={25} />
-                                                    </IconButton>
-                                                </Td>
-
                                                 {/* Cancel order  */}
                                                 <Td fontFamily={config.fontFamily}>
                                                     {
@@ -498,9 +775,33 @@ const OrderList = (props) => {
                                                     }
                                                 </Td>
 
+                                                {/* Description view */}
+                                                <Td fontFamily={config.fontFamily}>
+                                                    <Text fontFamily={config.fontFamily} textAlign={'center'}>
+                                                        {item?.checkoutSummary?.description ? item?.checkoutSummary?.description : '-'}
+                                                    </Text>
+                                                </Td>
+
                                             </Tr>
+
+                                            {/* Selected order printer view */}
+
+                                            {
+                                                selectedIndex === index ?
+                                                    <Tr bg={'aliceblue'}>
+                                                        <Td colSpan={listTitle.length}>
+
+                                                            {/* Printer component */}
+                                                            <PrinterView item={item} index={index} />
+
+                                                        </Td>
+                                                    </Tr>
+                                                    : null
+                                            }
                                         </Tbody>
                                     })}
+
+
 
                                 </Table>
                             </TableContainer>

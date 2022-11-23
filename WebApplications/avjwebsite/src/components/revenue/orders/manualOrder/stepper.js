@@ -115,7 +115,7 @@ const Stepper = ({ manualOrderDetails, orderId = null }) => {
 
                         :
 
-                        <Checkout orderDetails={manualOrderDetails} orderId={orderId}/>
+                        <Checkout orderDetails={manualOrderDetails?.orderDetails} orderId={orderId}/>
             }
 
 
