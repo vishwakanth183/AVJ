@@ -2,6 +2,9 @@ export const API = {
     // Auth
     'SIGN_IN': 'authRouter/login',
 
+    // Dashboard Details
+    'DASHBOARD_DETAILS' : 'dashboardRouter/dashboardDetails',
+
     // Product
     'CREATE_PRODUCT': 'productRouter/createProduct',
     'UPDATE_PRODUCT': 'productRouter/updateProduct',

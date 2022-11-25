@@ -9,6 +9,7 @@ app.use('/expenseRouter',require('./familyRouter'))
 app.use('/investmentRouter',require('./investmentRouter'))
 app.use('/lineBusinessRouter',require('./lineBusinessRouter'))
 app.use('/borrowedRouter',require('./borrowedRouter'))
+app.use('/dashboardRouter',require('./dashboardRouter'))
 
 
 module.exports = router
