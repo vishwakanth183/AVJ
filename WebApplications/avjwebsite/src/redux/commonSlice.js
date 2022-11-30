@@ -12,11 +12,7 @@ const CommonSlice = createSlice({
             menuTitle: 'Dashboard',
             submenuTitle: ''
         },
-        showSnackBar: {
-            open: false,
-            message: '',
-            color: 'black'
-        },
+        dashboardDetails : null
     },
     reducers: {
 
@@ -74,25 +70,15 @@ const CommonSlice = createSlice({
             }
         },
 
-        showSnackBar: {
-            reducer(state, action) {
-                state.showSnackBar = action.payload
+        updateDashboardDetails : {
+            reducer(state , action) {
+                state.dashboardDetails = action.payload.dashboardDetails
             }
-        },
-
-        closeSnackBar: {
-            reducer(state, action) {
-                state.showSnackBar = {
-                    open: false,
-                    message: '',
-                    color: 'black'
-                }
-            }
-        },
+        }
 
     },
 })
 
-export const { openAuthenticationError, closeAuthenticationError, showSnackBar, closeSnackBar, setLoaderActive, setLoaderInActive, createLogin , logOut , updateSelectedPage , updateTheme} = CommonSlice.actions
+export const { openAuthenticationError, closeAuthenticationError, setLoaderActive, setLoaderInActive, createLogin , logOut , updateSelectedPage , updateTheme , updateDashboardDetails} = CommonSlice.actions
 
 export default CommonSlice.reducer

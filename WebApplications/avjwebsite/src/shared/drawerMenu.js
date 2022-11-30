@@ -50,8 +50,8 @@ export const drawerMenu = [
             }
         ]
     },
-    {
-        title: 'Settings',
-        linkto: '/settings'
-    },
+    // {
+    //     title: 'Settings',
+    //     linkto: '/settings'
+    // },
 ];

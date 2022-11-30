@@ -3,14 +3,56 @@ const Products = require('../modals/Product')
 const LineBusiness = require('../modals/LineBusiness')
 const Borrowed = require('../modals/Borrowed')
 const FamilyExpense = require('../modals/FamilyExpense')
+const Investment = require('../modals/Investment')
 const statusCodes = require('../statusCodes')
 
 
 //Method used to get dashboard details
 const getDashBoardDetails = async (req, res) => {
 
-    //Months 
-    const months = ['January' , 'February' , 'March' , 'April' , 'May' , 'June' , 'July' , 'August' , 'September' , 'October' , 'November' , 'December']
+    // Months 
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+    // Date Filter
+    let filterDate = req.body.filterDate
+
+    // Variable to handle date range
+    let startDate = new Date()
+    let endDate = new Date()
+
+    if (filterDate) {
+        if (filterDate === 'This week') {
+            startDate = new Date(new Date().setDate(new Date().getDate() - 7));
+        }
+        else if (filterDate === 'Previous week') {
+            startDate = new Date(new Date().setDate(new Date().getDate() - 14));
+            endDate = new Date(new Date().setDate(new Date().getDate() - 7));
+        }
+        else if (filterDate === 'This month') {
+            startDate = new Date(new Date().getFullYear(), new Date().getMonth());
+        }
+        else if (filterDate === 'Previous month') {
+            const fromMonth = new Date().getMonth() - 1;
+            startDate = new Date(new Date(new Date().setMonth(fromMonth - 1)))
+            endDate = new Date(new Date(new Date().setMonth(fromMonth)))
+        }
+        else if (filterDate === 'Last 3 months') {
+            startDate = new Date(new Date().setMonth(new Date().getMonth() - 3))
+        }
+        else if (filterDate === 'Last 6 months') {
+            startDate = new Date(new Date().setMonth(new Date().getMonth() - 6))
+        }
+        else if (filterDate === 'Last 1 year') {
+            startDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1))
+        }
+        else if (filterDate === 'All Time') {
+            startDate = null
+            endDate = null
+        }
+    }
+
+    // console.log(`${filterDate} startDate`, startDate);
+    // console.log(`${filterDate} endDate`, endDate)
 
     try {
         let dashboardDetails = {
@@ -29,6 +71,10 @@ const getDashBoardDetails = async (req, res) => {
                 totalBorrowed: 0,
                 paid: 0
             },
+            overallInvestment: {
+                totalInvestment: 0,
+                totalAmountPaid: 0,
+            },
             familyExpense: 0,
         }
 
@@ -42,7 +88,17 @@ const getDashBoardDetails = async (req, res) => {
         })
 
         // Shop profit
-        await ManualOrder.find().then((allOrders) => {
+        await ManualOrder.find({
+            ...{
+                ...(startDate && endDate) && {
+                    createdAt: {
+                        $gte: startDate,
+                        $lte: endDate
+                    }
+                }
+            }
+        }).then((allOrders) => {
+            // console.log('allorders length', allOrders.length)
             if (allOrders.length) {
                 allOrders.map((order) => {
                     dashboardDetails.shopSummary.soldValue = dashboardDetails.shopSummary.soldValue + order.checkoutSummary.finalPrice;
@@ -55,7 +111,16 @@ const getDashBoardDetails = async (req, res) => {
         })
 
         //  LineBusiness profit
-        await LineBusiness.find().then((allLineBusinessOrders) => {
+        await LineBusiness.find({
+            ...{
+                ...(startDate && endDate) && {
+                    createdAt: {
+                        $gte: startDate,
+                        $lte: endDate
+                    }
+                }
+            }
+        }).then((allLineBusinessOrders) => {
             if (allLineBusinessOrders.length) {
                 allLineBusinessOrders.map((lineBusiness) => {
                     dashboardDetails.lineBusiness.profit = dashboardDetails.lineBusiness.profit + lineBusiness.profit;
@@ -64,34 +129,51 @@ const getDashBoardDetails = async (req, res) => {
         })
 
         // Overall Borrowed Value
-        await Borrowed.find().then((allBorrowed)=>{
-            if(allBorrowed.length)
-            {
-                allBorrowed.map((borrowed)=>{
+        await Borrowed.find().then((allBorrowed) => {
+            if (allBorrowed.length) {
+                allBorrowed.map((borrowed) => {
                     dashboardDetails.borrowedValue.totalBorrowed = borrowed.borrowedAmount,
-                    dashboardDetails.borrowedValue.paid = borrowed.paidAmount
+                        dashboardDetails.borrowedValue.paid = borrowed.paidAmount
                 })
             }
         })
 
         // Current Month Family Expenses
         await FamilyExpense.findOne({
-            month : months[Number(new Date().getMonth())],
-            year : new Date().getFullYear(),
-        }).then((currentMonthExpense)=>{
-            if(currentMonthExpense)
-            {
-                currentMonthExpense.totalExpense.map((allExpenses)=>{
-                    allExpenses.expenseList.map((singleExpense)=>{
+            month: months[Number(new Date().getMonth())],
+            year: new Date().getFullYear(),
+        }).then((currentMonthExpense) => {
+            if (currentMonthExpense) {
+                currentMonthExpense.totalExpense.map((allExpenses) => {
+                    allExpenses.expenseList.map((singleExpense) => {
                         // console.log(singleExpense)
                         dashboardDetails.familyExpense = dashboardDetails.familyExpense + singleExpense.amount
                     })
-                    
+
                 })
             }
         })
 
-        console.log('AVJ Details', dashboardDetails);
+        // Investment details
+        await Investment.find({
+            ...{
+                ...(startDate && endDate) && {
+                    createdAt: {
+                        $gte: startDate,
+                        $lte: endDate
+                    }
+                }
+            }
+        }).then((allInvestment) => {
+            if (allInvestment.length) {
+                allInvestment.map((investmentDetails) => {
+                    dashboardDetails.overallInvestment.totalInvestment += investmentDetails.finalPrice + investmentDetails.travelExpense
+                    dashboardDetails.overallInvestment.totalAmountPaid += investmentDetails.paidAmount
+                })
+            }
+        })
+
+        // console.log('AVJ Details', dashboardDetails.shopSummary);
 
         res.status(statusCodes.success).json(dashboardDetails)
     }
