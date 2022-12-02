@@ -57,38 +57,79 @@ const getCurrentOrdersByQuery = async (req, res) => {
     const offset = req.body.offset ? req.body.offset : 0
     const limit = req.body.limit ? req.body.limit : 100
 
-    let endDate = new Date();
-    let startDate;
-    if (req.query.currentDay) {
-        startDate = new Date().setUTCHours(0, 0, 0, 0);
-        endDate = new Date().setUTCHours(23, 59, 59, 999);
+    // Date Filter
+    let filterDate = req.body.filterDate
+
+    // Variable to handle date range
+    let startDate = new Date()
+    let endDate = new Date()
+
+    if (filterDate) {
+        if (filterDate === 'Current Day') {
+            startDate = new Date(new Date().setUTCHours(0, 0, 0, 0));
+            endDate = new Date(new Date().setUTCHours(23, 59, 59, 999));
+        }
+        else if (filterDate === 'Previous Day') {
+            startDate = new Date(new Date().setDate(new Date().getDate() - 2));
+            endDate = new Date(new Date().setDate(new Date().getDate() - 1));
+        }
+        else if (filterDate === 'This week') {
+            startDate = new Date(new Date().setDate(new Date().getDate() - 7));
+        }
+        else if (filterDate === 'Previous week') {
+            startDate = new Date(new Date().setDate(new Date().getDate() - 14));
+            endDate = new Date(new Date().setDate(new Date().getDate() - 7));
+        }
+        else if (filterDate === 'This month') {
+            startDate = new Date(new Date().getFullYear(), new Date().getMonth());
+        }
+        else if (filterDate === 'Previous month') {
+            startDate = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
+            endDate = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
+        }
+        else if (filterDate === 'Last 3 months') {
+            startDate = new Date(new Date().setMonth(new Date().getMonth() - 3))
+        }
+        else if (filterDate === 'Last 6 months') {
+            startDate = new Date(new Date().setMonth(new Date().getMonth() - 6))
+        }
+        else if (filterDate === 'Last 1 year') {
+            startDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1))
+        }
+        else if (filterDate === 'All Time') {
+            startDate = null
+            endDate = null
+        }
     }
-    else if (req.query.currentWeek) {
-        startDate = new Date(new Date().setDate(new Date().getDate() - 7));
-    }
-    else if (req.query.currentMonth) {
-        startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    }
-    else if (req.query.currentYear) {
-        startDate = new Date(new Date().getFullYear(), 0, 1)
-    }
-    console.log(startDate, endDate)
+
+    //    console.log(`${filterDate} startDate`, startDate);
+    //    console.log(`${filterDate} endDate`, endDate)
 
     try {
         await ManualOrder.find(
             {
-                $match: {
-                    createdAt: { $gte: startDate, $lt: startDate ? endDate : null },
+                ...{
+                    ...(startDate && endDate) && {
+                        createdAt: {
+                            $gte: startDate,
+                            $lte: endDate
+                        }
+                    }
                 },
-                ...{...search && {_id : search}},
+                ...{ ...search && { _id: search } },
                 $expr: req.body.paymentStatus === "Paid" ? { $gte: ['$checkoutSummary.paidAmount', '$checkoutSummary.finalPrice'] } : { $gt: ['$checkoutSummary.finalPrice', '$checkoutSummary.paidAmount'] }
             },
         ).skip(offset).limit(limit).sort({ createdAt: -1 }).then(async (orderRes) => {
             await ManualOrder.count({
-                $match: {
-                    createdAt: { $gte: startDate, $lt: startDate ? endDate : null },
+                ...{
+                    ...(startDate && endDate) && {
+                        createdAt: {
+                            $gte: startDate,
+                            $lte: endDate
+                        }
+                    }
                 },
-                ...{...search && {_id : search}},
+                ...{ ...search && { _id: search } },
                 $expr: req.body.paymentStatus === "Paid" ? { $gte: ['$checkoutSummary.paidAmount', '$checkoutSummary.finalPrice'] } : { $gt: ['$checkoutSummary.finalPrice', '$checkoutSummary.paidAmount'] }
             },).then((countRes) => {
                 res.status(statusCodes.success).json({
@@ -100,12 +141,10 @@ const getCurrentOrdersByQuery = async (req, res) => {
     }
     catch (err) {
         console.log('Order data fetch error', err);
-        if(search)
-        {
+        if (search) {
             res.status(statusCodes.unprocessableEntity).json('Invalid orderId')
         }
-        else
-        {
+        else {
             res.status(statusCodes.unprocessableEntity).json(err)
         }
     }

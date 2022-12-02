@@ -66,9 +66,6 @@ const AddEditInvestment = ({ props, investmentId }) => {
         paidAmount: Yup.number()
             .typeError('Invalid paid amount')
             .required('Paid amount is required'),
-        travelExpense: Yup.number()
-            .typeError('Invalid travel value')
-            .required('Travel Expense is required'),
         orderedProducts: Yup.array().of(
             Yup.object().shape({
                 productName: Yup.string().required('Product name is required'),
@@ -96,7 +93,6 @@ const AddEditInvestment = ({ props, investmentId }) => {
             purchaseValue: investmentDetails?.purchaseValue ? investmentDetails.purchaseValue : 0,
             discount: investmentDetails?.discount ? investmentDetails.discount : 0,
             finalPrice: investmentDetails?.finalPrice ? investmentDetails.finalPrice : 0,
-            travelExpense: investmentDetails?.travelExpense ? investmentDetails?.travelExpense : 0,
             paidAmount: investmentDetails?.paidAmount ? investmentDetails?.paidAmount : 0,
             description: investmentDetails?.description ? investmentDetails.description : '',
             orderedProducts: investmentDetails?.orderedProducts ? investmentDetails.orderedProducts : [{
@@ -115,7 +111,6 @@ const AddEditInvestment = ({ props, investmentId }) => {
                 discount: Number(val.discount),
                 finalPrice: Number(val.finalPrice),
                 paidAmount: Number(val.paidAmount),
-                travelExpense: Number(val.travelExpense),
                 description: val.description,
                 orderedProducts: val.orderedProducts
             }
@@ -270,18 +265,6 @@ const AddEditInvestment = ({ props, investmentId }) => {
                         />
                         {formik.touched.finalPrice && formik.errors.finalPrice ?
                             <Text fontFamily={config.fontFamily} color={appColors.errorColor}>{formik.errors.finalPrice}</Text> : null}
-                    </Box>
-
-                    {/* Travel Expense view */}
-                    <Box>
-                        <FormLabel color={appColors.formTitle} fontFamily={config.fontFamily} fontSize='lg' fontWeight={'semibold'} mb={5}>{'Travel Expense'}</FormLabel>
-                        <CommonNumberInput
-                            value={formik.values.travelExpense}
-                            onBlur={formik.handleBlur('travelExpense')}
-                            onChange={(value) => formik.setFieldValue('travelExpense', value)}
-                        />
-                        {formik.touched.travelExpense && formik.errors.travelExpense ?
-                            <Text fontFamily={config.fontFamily} color={appColors.errorColor}>{formik.errors.travelExpense}</Text> : null}
                     </Box>
 
                     {/* Amount paid view */}

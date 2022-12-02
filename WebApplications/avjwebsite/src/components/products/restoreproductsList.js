@@ -20,6 +20,7 @@ import { darkTheme, lightTheme } from "../../shared/theme";
 import CommonService from "../../shared/commonService/commonService";
 import { config } from "../../environment";
 import { Confirmation } from "../../shared/components/confirmation";
+import { Select } from "chakra-react-select";
 
 const RestoredProductList = (props) => {
 
@@ -29,6 +30,33 @@ const RestoredProductList = (props) => {
     // single media query with no options
     const [isLargerThan900] = useMediaQuery('(min-width: 900px)')
     const [isLargerThan700] = useMediaQuery('(min-width: 600px)')
+
+    //Variable to maintain product type values
+    const productType = [
+        {
+            value: 0,
+            label: 'Hardware',
+        },
+        {
+            value: 1,
+            label: 'Electrical',
+        },
+        {
+            value: 2,
+            label: 'Pipes',
+        },
+        {
+            value: 3,
+            label: 'Paints',
+        },
+        {
+            value: 4,
+            label: 'All Type'
+        }
+    ]
+
+    // Variable to handle selected product type
+    const [selectedProductType, setSelectedProductType] = useState(productType[4])
 
     //Variable to handle search
     const [search, setSearch] = useState('');
@@ -219,17 +247,19 @@ const RestoredProductList = (props) => {
                 offset: offset !== null ? offset * rowsPerPage : page * rowsPerPage,
                 limit: limit !== null ? limit : rowsPerPage,
                 search: clearSearch ? '' : search,
-                isDeleted: true
+                isDeleted: true,
+                productType: selectedProductType ? selectedProductType.label : productType[4].label
             }
         })).unwrap().then((res) => {
             dispatch(updateRestoredProductList(res))
         }).catch((err) => {
-            toast({
-                title: 'Failed to fetch data',
-                status: 'warning',
-                duration: 2000,
-                isClosable: true,
-            })
+            console.log('restored product list fetch error',err)
+            // toast({
+            //     title: 'Failed to fetch data',
+            //     status: 'warning',
+            //     duration: 2000,
+            //     isClosable: true,
+            // })
         })
     }
 
@@ -363,7 +393,7 @@ const RestoredProductList = (props) => {
             submenuTitle: 'Restore Products'
         }))
         getRestoredProducts({ offset: 0 })
-    }, [])
+    }, [selectedProductType])
 
 
     //UseEffect which will be called while searching a particular product
@@ -409,6 +439,8 @@ const RestoredProductList = (props) => {
 
             {/* Search bar View */}
             <HStack m={10} ml={5} justifyContent={'space-between'}>
+
+                {/* Search input */}
                 <InputGroup maxW={'80%'} borderRadius={'full'}>
                     <Input
                         fontFamily={config.fontFamily}
@@ -438,17 +470,25 @@ const RestoredProductList = (props) => {
                         </ButtonGroup>
                     </InputRightElement>
                 </InputGroup>
-                <Button
-                    fontFamily={config.fontFamily}
-                    leftIcon={<AiOutlinePlus color={appColors.light} strokeWidth={'50px'} />}
-                    bg={appColors.primary}
-                    color={appColors.light}
-                    onClick={() => {
-                        navigation('/addProduct', { replace: true })
-                    }}
-                >
-                    {isLargerThan900 ? 'Add Product' : 'Add'}
-                </Button>
+
+                {/* Filter View */}
+                <Box display={'flex'} justifyContent='flex-end' m={5} mr={10}>
+                    <Box minW={isLargerThan700 ? 300 : 200}>
+                        <Select
+                            isMulti={false}
+                            isRequired={true}
+                            placeholder={isLargerThan700 ? 'Select date filter' : 'Select ...'}
+                            className={'selectDateFilter'}
+                            value={selectedProductType}
+                            defaultValue={productType[4]}
+                            onChange={(selectedValue) => {
+                                setSelectedProductType(selectedValue)
+                            }}
+                            options={productType}
+                        />
+                    </Box>
+                </Box>
+                
             </HStack>
 
             {restoredProductsReducer.status === 'loading' ?

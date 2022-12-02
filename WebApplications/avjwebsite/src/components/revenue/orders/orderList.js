@@ -23,7 +23,9 @@ import { FaPencilAlt } from 'react-icons/fa';
 import { useSelector, useDispatch } from "react-redux";
 import { HiOutlinePrinter } from 'react-icons/hi';
 import { TiWarning } from 'react-icons/ti'
+import { Select } from 'chakra-react-select';
 import ReactToPrint, { useReactToPrint } from 'react-to-print'
+import './orderList.scss'
 
 // Custom imports
 import { config } from '../../../environment';
@@ -38,17 +40,65 @@ import { Confirmation } from '../../../shared/components/confirmation';
 import { resetManualOrder } from '../../../redux/productSlice';
 import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
 import { ComponentToPrint } from '../../../shared/components/ComponentToPrint';
+import moment from 'moment';
 
 const OrderList = (props) => {
 
     //Variable to handle list titles
-    const listTitle = ['Order no', 'Purchase Amount', 'Order Amount', 'Discount', 'Final Amount', 'Paid Amount', 'Profit', 'Details', 'Progress', 'Edit', 'Cancel', 'Description']
+    const listTitle = ['Order no', 'Discount', 'Final Amount', 'Paid Amount', 'Profit', 'Progress', 'Edit', 'Cancel', 'Details', 'Description', 'Created At' , 'Purchase Amount', 'Order Amount']
 
     // Variable to handle shop image
     const shopImage = require('../../../assets/images/shopImage.png')
 
     //Variable to handle list titles
     const printerTable = ['PRODUCT NAME', 'BRAND', "VARIANT", 'CGST', 'SGST', 'AMOUNT', 'QUANTITY', 'WEIGHT UNIT', 'TOTAL']
+
+    //Variable to handle list of date filters
+    const filterList = [
+        {
+            value: 0,
+            label: 'Current Day',
+        },
+        {
+            value: 1,
+            label: 'Previous Day',
+        },
+        {
+            value: 2,
+            label: 'This week',
+        },
+        {
+            value: 3,
+            label: 'Previous week',
+        },
+        {
+            value: 4,
+            label: 'This month',
+        },
+        {
+            value: 5,
+            label: 'Previous month',
+        },
+        {
+            value: 6,
+            label: 'Last 3 months'
+        },
+        {
+            value: 7,
+            label: 'Last 6 months'
+        },
+        {
+            value: 8,
+            label: 'Last 1 year'
+        },
+        {
+            value: 9,
+            label: 'All Time'
+        }
+    ]
+
+    // Variable to handle selected date filter
+    const [selectedDateFilter, setSelectedDateFilter] = useState(filterList[4])
 
     //Variable used to get productlist states from redux
     const commonReducer = useSelector(state => state.commonReducer)
@@ -205,7 +255,8 @@ const OrderList = (props) => {
                 paymentStatus: (currentPaymentStatus != null ? currentPaymentStatus : value) === 0 ? 'Pending' : 'Paid',
                 offset: offset !== null ? offset * rowsPerPage : page * rowsPerPage,
                 limit: limit !== null ? limit : rowsPerPage,
-                search: clearSearch ? '' : search
+                search: clearSearch ? '' : search,
+                filterDate: selectedDateFilter ? selectedDateFilter.label : filterList[4].label
             }
         })).unwrap().then((res) => {
             dispatch(updateManualOrder(res))
@@ -267,12 +318,12 @@ const OrderList = (props) => {
                         <Box>
 
                             {/* Address View */}
-                            <Text fontFamily={config.fontFamily} fontWeight={'semibold'} fontSize={'2xl'}>
+                            <Text fontFamily={config.fontFamily} fontWeight={'semibold'} fontSize={'2xl'} color={appColors.dark}>
                                 Address : {config.address}
                             </Text>
 
                             {/* Contact View */}
-                            <Text fontFamily={config.fontFamily} fontWeight={'semibold'} fontSize={'large'} mt={5}>
+                            <Text fontFamily={config.fontFamily} fontWeight={'semibold'} fontSize={'large'} mt={5} color={appColors.dark}>
                                 Contact No: {config.contactNo}
                             </Text>
 
@@ -286,12 +337,12 @@ const OrderList = (props) => {
 
                     <Box>
 
-                        <Text fontFamily={config.fontFamily} fontWeight={'bold'} fontSize='2xl' ml={5}>
+                        <Text fontFamily={config.fontFamily} fontWeight={'bold'} fontSize='2xl' ml={5} color={appColors.dark}>
                             # ORDERID : {item?._id}
                         </Text>
 
                         {config.cgstNo ?
-                            <Text fontFamily={config.fontFamily} fontWeight={'bold'} fontSize='2xl' ml={5} mt={5}>
+                            <Text fontFamily={config.fontFamily} fontWeight={'bold'} fontSize='2xl' ml={5} mt={5} color={appColors.dark}>
                                 # CGST NO : {config.cgstNo}
                             </Text> : null
                         }
@@ -305,7 +356,7 @@ const OrderList = (props) => {
 
                         <Table>
 
-                            <TableCaption fontFamily={config.fontFamily}>AVJ Hardwares</TableCaption>
+                            <TableCaption fontFamily={config.fontFamily} color={appColors.dark}>AVJ Hardwares</TableCaption>
 
                             {/* Table header view */}
                             <Thead bg={appColors.dark}>
@@ -331,7 +382,7 @@ const OrderList = (props) => {
                                         return <Tr key={productIndex}>
 
                                             {/* Product name */}
-                                            <Td fontFamily={config.fontFamily}>
+                                            <Td fontFamily={config.fontFamily} color={appColors.dark}>
                                                 {orderItem.productName}
                                             </Td>
 
@@ -367,22 +418,22 @@ const OrderList = (props) => {
                                             </Td>
 
                                             {/* CGST */}
-                                            <Td fontFamily={config.fontFamily}>
+                                            {orderItem.cgst ? <Td fontFamily={config.fontFamily} color={appColors.dark}>
                                                 ₹{priceFormatter(orderItem.cgst)}
-                                            </Td>
+                                            </Td> : null}
 
                                             {/* SGST */}
-                                            <Td fontFamily={config.fontFamily}>
+                                            {orderItem.sgst ? <Td fontFamily={config.fontFamily} color={appColors.dark}>
                                                 ₹{priceFormatter(orderItem.sgst)}
-                                            </Td>
+                                            </Td> : null}
 
                                             {/* Sales Price */}
-                                            <Td fontFamily={config.fontFamily}>
+                                            <Td fontFamily={config.fontFamily} color={appColors.dark}>
                                                 ₹{priceFormatter(orderItem.salesPrice)}
                                             </Td>
 
                                             {/* Quanity */}
-                                            <Td fontFamily={config.fontFamily} pl={50}>
+                                            <Td fontFamily={config.fontFamily} pl={50} color={appColors.dark}>
                                                 {priceFormatter(orderItem.quantity)}
                                             </Td>
 
@@ -392,7 +443,7 @@ const OrderList = (props) => {
                                             </Td>
 
                                             {/* Total */}
-                                            <Td fontFamily={config.fontFamily}>
+                                            <Td fontFamily={config.fontFamily} color={appColors.dark}>
                                                 ₹{priceFormatter(orderItem.salesPrice * orderItem.quantity)}
                                             </Td>
 
@@ -492,7 +543,7 @@ const OrderList = (props) => {
     useEffect(() => {
         dispatch(resetManualOrderList())
         getAllManualOrder({ offset: 0 })
-    }, [value])
+    }, [value, selectedDateFilter])
 
     //UseEffect which will be called while searching a particular product
     useEffect(() => {
@@ -579,6 +630,24 @@ const OrderList = (props) => {
 
             </Tabs>
 
+            {/* Filter View */}
+            <Box display={'flex'} justifyContent='flex-end' m={5} mr={10}>
+                <Box minW={300}>
+                    <Select
+                        isMulti={false}
+                        isRequired={true}
+                        placeholder={isLargerThan700 ? 'Select date filter' : 'Select ...'}
+                        className={'selectDateFilter'}
+                        value={selectedDateFilter}
+                        defaultValue={filterList[4]}
+                        onChange={(selectedValue) => {
+                            setSelectedDateFilter(selectedValue)
+                        }}
+                        options={filterList}
+                    />
+                </Box>
+            </Box>
+
             {/* Search bar View */}
             <HStack m={10} justifyContent={'space-between'}>
                 <InputGroup maxW={'80%'} borderRadius={'full'}>
@@ -610,6 +679,7 @@ const OrderList = (props) => {
                         </ButtonGroup>
                     </InputRightElement>
                 </InputGroup>
+
                 <Button
                     fontFamily={config.fontFamily}
                     leftIcon={<AiOutlinePlus color={appColors.light} strokeWidth={'50px'} />}
@@ -623,6 +693,7 @@ const OrderList = (props) => {
                 >
                     {isLargerThan900 ? 'Add ManualOrder' : 'Add'}
                 </Button>
+
             </HStack>
 
             {/* List View */}
@@ -658,22 +729,12 @@ const OrderList = (props) => {
                                     {/* Manual Order List View */}
                                     {/* ['Order no', 'Purchase Amount', 'Order Amount', 'Final Amount' ,  'Profit', 'Paid Amount' , 'Progress', 'Edit'] */}
                                     {manualOrder?.data?.map((item, index) => {
-                                        return <Tbody key={index} bg={item?.isCancelled ? 'slategrey' : null}>
+                                        return <Tbody key={index} bg={item?.isCancelled ? appColors.cancelledOrderBg : null}>
                                             <Tr>
 
                                                 {/* Order id */}
                                                 <Td fontFamily={config.fontFamily}>
                                                     {item._id}
-                                                </Td>
-
-                                                {/* Purchase price */}
-                                                <Td fontFamily={config.fontFamily}>
-                                                    ₹{priceFormatter(item.checkoutSummary.orderPurchasePrice)}
-                                                </Td>
-
-                                                {/* Sales price */}
-                                                <Td fontFamily={config.fontFamily}>
-                                                    ₹{priceFormatter(item.checkoutSummary.orderSalesPrice)}
                                                 </Td>
 
                                                 {/* Discount */}
@@ -700,24 +761,6 @@ const OrderList = (props) => {
                                                     <Badge p={3} borderRadius={'md'} bg={appColors.solidGreen} color={appColors.light} minW={70}>
                                                         ₹{priceFormatter(item.checkoutSummary.profit)}
                                                     </Badge>
-                                                </Td>
-
-                                                {/* Details view */}
-                                                <Td fontFamily={config.fontFamily}>
-                                                    <IconButton borderRadius={'full'} bg={'none'} onClick={() => {
-                                                        if (selectedIndex === index) {
-                                                            setSelectedIndex(null)
-                                                        }
-                                                        else {
-                                                            setSelectedIndex(index)
-                                                        }
-                                                    }}>
-                                                        {
-                                                            selectedIndex === index ?
-                                                                <BiChevronUp size={25} /> :
-                                                                <BiChevronDown size={25} />
-                                                        }
-                                                    </IconButton>
                                                 </Td>
 
                                                 {/* Progress loader */}
@@ -775,11 +818,44 @@ const OrderList = (props) => {
                                                     }
                                                 </Td>
 
+                                                {/* Details view */}
+                                                <Td fontFamily={config.fontFamily}>
+                                                    <IconButton borderRadius={'full'} bg={'none'} onClick={() => {
+                                                        if (selectedIndex === index) {
+                                                            setSelectedIndex(null)
+                                                        }
+                                                        else {
+                                                            setSelectedIndex(index)
+                                                        }
+                                                    }}>
+                                                        {
+                                                            selectedIndex === index ?
+                                                                <BiChevronUp size={25} /> :
+                                                                <BiChevronDown size={25} />
+                                                        }
+                                                    </IconButton>
+                                                </Td>
+
                                                 {/* Description view */}
                                                 <Td fontFamily={config.fontFamily}>
                                                     <Text fontFamily={config.fontFamily} textAlign={'center'}>
                                                         {item?.checkoutSummary?.description ? item?.checkoutSummary?.description : '-'}
                                                     </Text>
+                                                </Td>
+
+                                                {/* Created at */}
+                                                <Td fontFamily={config.fontFamily}>
+                                                    {moment(item.createdAt).format('lll')}
+                                                </Td>
+
+                                                {/* Purchase price */}
+                                                <Td fontFamily={config.fontFamily}>
+                                                    ₹{priceFormatter(item.checkoutSummary.orderPurchasePrice)}
+                                                </Td>
+
+                                                {/* Sales price */}
+                                                <Td fontFamily={config.fontFamily}>
+                                                    ₹{priceFormatter(item.checkoutSummary.orderSalesPrice)}
                                                 </Td>
 
                                             </Tr>
@@ -788,7 +864,7 @@ const OrderList = (props) => {
 
                                             {
                                                 selectedIndex === index ?
-                                                    <Tr bg={'aliceblue'}>
+                                                    <Tr bg={appColors.printBillBg}>
                                                         <Td colSpan={listTitle.length}>
 
                                                             {/* Printer component */}

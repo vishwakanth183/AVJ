@@ -34,40 +34,48 @@ const Dashboard = (props) => {
     const filterList = [
         {
             value: 0,
-            label: 'This week',
+            label: 'Current Day',
         },
         {
             value: 1,
-            label: 'Previous week',
+            label: 'Previous Day',
         },
         {
             value: 2,
-            label: 'This month',
+            label: 'This week',
         },
         {
             value: 3,
-            label: 'Previous month',
+            label: 'Previous week',
         },
         {
             value: 4,
-            label: 'Last 3 months'
+            label: 'This month',
         },
         {
             value: 5,
-            label: 'Last 6 months'
+            label: 'Previous month',
         },
         {
             value: 6,
-            label: 'Last 1 year'
+            label: 'Last 3 months'
         },
         {
             value: 7,
+            label: 'Last 6 months'
+        },
+        {
+            value: 8,
+            label: 'Last 1 year'
+        },
+        {
+            value: 9,
             label: 'All Time'
         }
     ]
 
     // Variable to handle selected date filter
-    const [selectedDateFilter, setSelectedDateFilter] = useState(filterList[2])
+    const [selectedDateFilter, setSelectedDateFilter] = useState(filterList[4])
 
     // single media query with no options
     const [isLargerThan700] = useMediaQuery('(min-width: 700px)')
@@ -85,7 +93,7 @@ const Dashboard = (props) => {
             dispatch(postMethod({
                 url: API.DASHBOARD_DETAILS,
                 data: {
-                    filterDate: selectedDateFilter ? selectedDateFilter.label : filterList[2].label
+                    filterDate: selectedDateFilter ? selectedDateFilter.label : filterList[4].label
                 }
             })).unwrap().then((res) => {
                 setDashboardLoader(false)
@@ -144,7 +152,7 @@ const Dashboard = (props) => {
                                             placeholder={isLargerThan700 ? 'Select date filter' : 'Select ...'}
                                             className={'select'}
                                             value={selectedDateFilter}
-                                            defaultValue={filterList[2]}
+                                            defaultValue={filterList[4]}
                                             onChange={(selectedValue) => {
                                                 setSelectedDateFilter(selectedValue)
                                             }}

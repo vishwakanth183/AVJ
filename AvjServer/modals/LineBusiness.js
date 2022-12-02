@@ -6,7 +6,6 @@ const LineBusinessSchema = new mongoose.Schema({
     purchaseValue: { type: Number, required: true, default: 0 },
     soldValue: { type: Number, required: true, default: 0 },
     profit: { type: Number, required: true, default: 0 },
-    travelExpense: { type: Number, required: true, default: 0 },
     paidAmount: { type: Number, required: true, default: 0 },
     description: { type: String, default: null },
     orderedProducts: [

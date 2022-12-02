@@ -5,7 +5,6 @@ const InvestmentSchema = new mongoose.Schema({
     purchaseValue: { type: Number, required: true, default: 0 },
     discount: { type: Number, required: true },
     finalPrice: { type: Number, default: null },
-    travelExpense: { type: Number, required: true, default: 0 },
     paidAmount : { type: Number, required: true, default: 0 },
     description: { type: String, default: null },
     orderedProducts: [

@@ -21,7 +21,15 @@ const getDashBoardDetails = async (req, res) => {
     let endDate = new Date()
 
     if (filterDate) {
-        if (filterDate === 'This week') {
+        if (filterDate === 'Current Day') {
+            startDate = new Date(new Date().setUTCHours(0, 0, 0, 0));
+            endDate = new Date(new Date().setUTCHours(23, 59, 59, 999));
+        }
+        else if (filterDate === 'Previous Day') {
+            startDate = new Date(new Date().setDate(new Date().getDate() - 2));
+            endDate = new Date(new Date().setDate(new Date().getDate() - 1));
+        }
+        else if (filterDate === 'This week') {
             startDate = new Date(new Date().setDate(new Date().getDate() - 7));
         }
         else if (filterDate === 'Previous week') {
@@ -32,9 +40,8 @@ const getDashBoardDetails = async (req, res) => {
             startDate = new Date(new Date().getFullYear(), new Date().getMonth());
         }
         else if (filterDate === 'Previous month') {
-            const fromMonth = new Date().getMonth() - 1;
-            startDate = new Date(new Date(new Date().setMonth(fromMonth - 1)))
-            endDate = new Date(new Date(new Date().setMonth(fromMonth)))
+            startDate = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
+            endDate = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
         }
         else if (filterDate === 'Last 3 months') {
             startDate = new Date(new Date().setMonth(new Date().getMonth() - 3))
@@ -96,7 +103,8 @@ const getDashBoardDetails = async (req, res) => {
                         $lte: endDate
                     }
                 }
-            }
+            },
+            isCancelled: false
         }).then((allOrders) => {
             // console.log('allorders length', allOrders.length)
             if (allOrders.length) {
@@ -167,7 +175,7 @@ const getDashBoardDetails = async (req, res) => {
         }).then((allInvestment) => {
             if (allInvestment.length) {
                 allInvestment.map((investmentDetails) => {
-                    dashboardDetails.overallInvestment.totalInvestment += investmentDetails.finalPrice + investmentDetails.travelExpense
+                    dashboardDetails.overallInvestment.totalInvestment += investmentDetails.finalPrice
                     dashboardDetails.overallInvestment.totalAmountPaid += investmentDetails.paidAmount
                 })
             }

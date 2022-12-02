@@ -111,14 +111,21 @@ const getAllProducts = async (req, res) => {
     const offset = req.body.offset ? req.body.offset : 0
     const limit = req.body.limit ? req.body.limit : 100
     const isDeleted = req.body.isDeleted ? true : false
+    const productType = req.body.productType && req.body.productType!='All Type' ? req.body.productType : false
 
     // console.log('Inside get all products');
     await products.find({
         isDeleted: isDeleted,
+        ...{...productType && {
+            productType : productType
+        }},
         productName: search
     }).skip(offset).limit(limit).then(async (response) => {
         await products.count({
             isDeleted: isDeleted,
+            ...{...productType && {
+                productType : productType
+            }},
             productName: search
         }).then((countRes) => {
             res.status(statusCodes.success).json({

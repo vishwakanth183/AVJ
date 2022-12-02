@@ -13,6 +13,8 @@ const skyblue = 'skyblue'
 const blackAlpha = 'blackAlpha.100'
 const warning = 'yellow'
 const gold = 'gold'
+const aliceBlue = 'aliceBlue'
+const slategrey = 'slategrey'
 
 const lightBlack = 'black.100'
 const lightTeal = 'teal.100'
@@ -30,7 +32,7 @@ export const darkTheme = {
     primary : teal,
     secondary : lightTeal,
     textColor : white,
-    buttonBgColor : black,
+    buttonBgColor : teal,
     buttonTitleColor : white,
     iconColor : white,
     light : white,
@@ -55,7 +57,9 @@ export const darkTheme = {
     skyblue : skyblue,
     blackAlpha : blackAlpha,
     warning : warning,
-    gold : gold
+    gold : gold,
+    printBillBg : aliceBlue,
+    cancelledOrderBg : slategrey
 }
 
 export const lightTheme = {
@@ -87,5 +91,7 @@ export const lightTheme = {
     skyblue : skyblue,
     blackAlpha : blackAlpha,
     warning : warning,
-    gold : gold
+    gold : gold,
+    printBillBg : aliceBlue,
+    cancelledOrderBg : aliceBlue
 }

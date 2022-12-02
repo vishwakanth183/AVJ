@@ -31,11 +31,60 @@ import CommonLoader from '../../../shared/components/commonLoader';
 import { postMethod } from '../../../redux/HttpRouting/httpRoutingRedux';
 import CommonService from '../../../shared/commonService/commonService';
 import CommonPagination from '../../../shared/components/Pagination/commonPagination';
+import { Select } from 'chakra-react-select';
+import moment from 'moment';
 
 const LineBusinessList = (props) => {
 
     //Variable to handle list titles
-    const listTitle = ['Buyed From', 'Sold to', 'Purchase Value', 'Sold Value', 'Paid Amount' , 'Travel Expenses', 'Profit', 'Progress', 'Edit']
+    const listTitle = ['Buyed From', 'Sold to', 'Purchase Value', 'Sold Value', 'Paid Amount' , 'Profit', 'Progress', 'Edit' , 'Created At']
+
+     //Variable to handle list of date filters
+     const filterList = [
+        {
+            value: 0,
+            label: 'Current Day',
+        },
+        {
+            value: 1,
+            label: 'Previous Day',
+        },
+        {
+            value: 2,
+            label: 'This week',
+        },
+        {
+            value: 3,
+            label: 'Previous week',
+        },
+        {
+            value: 4,
+            label: 'This month',
+        },
+        {
+            value: 5,
+            label: 'Previous month',
+        },
+        {
+            value: 6,
+            label: 'Last 3 months'
+        },
+        {
+            value: 7,
+            label: 'Last 6 months'
+        },
+        {
+            value: 8,
+            label: 'Last 1 year'
+        },
+        {
+            value: 9,
+            label: 'All Time'
+        }
+    ]
+
+    // Variable to handle selected date filter
+    const [selectedDateFilter, setSelectedDateFilter] = useState(filterList[4])
 
     //Variable used to get productlist states from redux
     const commonReducer = useSelector(state => state.commonReducer)
@@ -113,6 +162,7 @@ const LineBusinessList = (props) => {
                 limit: limit !== null ? limit : rowsPerPage,
                 search: clearSearch ? '' : search,
                 paymentStatus: value === 0 ? 'Pending' : 'Paid',
+                filterDate: selectedDateFilter ? selectedDateFilter.label : filterList[4].label
             }
         })).unwrap().then((res) => {
             console.log("ressss", res)
@@ -142,7 +192,7 @@ const LineBusinessList = (props) => {
     useEffect(() => {
         dispatch(resetLineBusinessList())
         getLineBusinessList({ offset: 0 })
-    }, [value])
+    }, [value,selectedDateFilter])
 
     //UseEffect which will be called while searching a particular product
     useEffect(() => {
@@ -227,6 +277,24 @@ const LineBusinessList = (props) => {
 
             </Tabs>
 
+            {/* Filter View */}
+            <Box display={'flex'} justifyContent='flex-end' m={5} mr={10}>
+                <Box minW={300}>
+                    <Select
+                        isMulti={false}
+                        isRequired={true}
+                        placeholder={isLargerThan700 ? 'Select date filter' : 'Select ...'}
+                        className={'selectDateFilter'}
+                        value={selectedDateFilter}
+                        defaultValue={filterList[4]}
+                        onChange={(selectedValue) => {
+                            setSelectedDateFilter(selectedValue)
+                        }}
+                        options={filterList}
+                    />
+                </Box>
+            </Box>
+
             {/* Search bar View */}
             <HStack m={10} justifyContent={'space-between'}>
                 <InputGroup maxW={'80%'} borderRadius={'full'}>
@@ -305,27 +373,38 @@ const LineBusinessList = (props) => {
                                     {lineBusiness?.data?.map((item, index) => {
                                         return <Tbody>
                                             <Tr>
+
+                                                {/* Buyed from shop */}
                                                 <Td fontFamily={config.fontFamily}>
                                                     {item.buyedFrom}
                                                 </Td>
+
+                                                {/* Sold to shop */}
                                                 <Td fontFamily={config.fontFamily}>
                                                     {item.soldTo}
                                                 </Td>
+
+                                                {/* Purchase value view */}
                                                 <Td fontFamily={config.fontFamily}>
                                                     ₹{priceFormatter(item?.purchaseValue)}
                                                 </Td>
+
+                                                {/* Sold Value View */}
                                                 <Td fontFamily={config.fontFamily} color={appColors.primaryBlue} fontWeight={'semibold'}>
                                                     ₹{priceFormatter(item?.soldValue)}
                                                 </Td>
+
+                                                {/* Paid Amount View */}
                                                 <Td fontFamily={config.fontFamily} color={appColors.primaryBlue} fontWeight={'semibold'}>
                                                     ₹{priceFormatter(item?.paidAmount)}
                                                 </Td>
-                                                <Td fontFamily={config.fontFamily} color={appColors.primaryBlue} fontWeight={'semibold'}>
-                                                    ₹{priceFormatter(item?.travelExpense)}
-                                                </Td>
+
+                                                {/* Profit View */}
                                                 <Td fontFamily={config.fontFamily} color={appColors.green} fontWeight={'semibold'}>
                                                     ₹{priceFormatter(item?.profit)}
                                                 </Td>
+
+                                                {/* Progress Loader View */}
                                                 <Td fontFamily={config.fontFamily}>
                                                     {
                                                         progressLoaderValue(item) >= 100 ?
@@ -343,6 +422,8 @@ const LineBusinessList = (props) => {
                                                             </Box>
                                                     }
                                                 </Td>
+
+                                                {/* Edit icon */}
                                                 <Td fontFamily={config.fontFamily}>
                                                     <IconButton borderRadius={'full'} bg={'none'} onClick={() => {
                                                         onEditClicked(item._id)
@@ -350,20 +431,11 @@ const LineBusinessList = (props) => {
                                                         <FaPencilAlt />
                                                     </IconButton>
                                                 </Td>
-                                                {/* <Td fontFamily={config.fontFamily}>
-                                                    <IconButton borderRadius={'full'} bg={'none'} onClick={() => {
-                                                        if (selectedIndex === expenseIndex) {
-                                                            setSelectIndex(null)
-                                                        }
-                                                        else {
-                                                            setSelectIndex(expenseIndex)
-                                                        }
-                                                    }}>
-                                                        {selectedIndex != null && selectedIndex === expenseIndex ?
-                                                            <FaChevronUp /> :
-                                                            <FaChevronDown />}
-                                                    </IconButton>
-                                                </Td> */}
+
+                                                {/* Created At */}
+                                                <Td fontFamily={config.fontFamily} >
+                                                   {moment(item.createdAt).format('lll')}
+                                                </Td>
                                             </Tr>
                                         </Tbody>
                                     })}

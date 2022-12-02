@@ -11,7 +11,6 @@ const createInvestment = async (req, res) => {
         purchaseValue: req.body.purchaseValue,
         discount: req.body.discount,
         finalPrice: req.body.finalPrice,
-        travelExpense: req.body.travelExpense,
         paidAmount : req.body.paidAmount,
         description: req.body.description,
         orderedProducts: req.body.orderedProducts
@@ -43,13 +42,79 @@ const getAllInvestment = async (req, res) => {
     const offset = req.body.offset ? req.body.offset : 0
     const limit = req.body.limit ? req.body.limit : 100
 
+     // Date Filter
+   let filterDate = req.body.filterDate
+
+   // Variable to handle date range
+  let startDate = new Date()
+  let endDate = new Date()
+
+  if (filterDate) {
+      if(filterDate === 'Current Day')
+      {
+          startDate = new Date(new Date().setUTCHours(0, 0, 0, 0));
+          endDate = new Date(new Date().setUTCHours(23, 59, 59, 999));
+      }
+      else if(filterDate === 'Previous Day')
+      {
+          startDate = new Date(new Date().setDate(new Date().getDate() - 2));
+          endDate = new Date(new Date().setDate(new Date().getDate() - 1));
+      }
+      else if (filterDate === 'This week') {
+          startDate = new Date(new Date().setDate(new Date().getDate() - 7));
+      }
+      else if (filterDate === 'Previous week') {
+          startDate = new Date(new Date().setDate(new Date().getDate() - 14));
+          endDate = new Date(new Date().setDate(new Date().getDate() - 7));
+      }
+      else if (filterDate === 'This month') {
+          startDate = new Date(new Date().getFullYear(), new Date().getMonth());
+      }
+      else if (filterDate === 'Previous month') {
+          startDate = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1);
+          endDate = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
+      }
+      else if (filterDate === 'Last 3 months') {
+          startDate = new Date(new Date().setMonth(new Date().getMonth() - 3))
+      }
+      else if (filterDate === 'Last 6 months') {
+          startDate = new Date(new Date().setMonth(new Date().getMonth() - 6))
+      }
+      else if (filterDate === 'Last 1 year') {
+          startDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1))
+      }
+      else if (filterDate === 'All Time') {
+          startDate = null
+          endDate = null
+      }
+  }
+
+
+//    console.log(`${filterDate} lineBusiness`, startDate);
+//    console.log(`${filterDate} lineBusiness`, endDate)
 
     await Investment.find({
         buyedFrom: search,
+        ...{
+            ...(startDate && endDate) && {
+                createdAt: {
+                    $gte: startDate,
+                    $lte: endDate
+                }
+            }
+        },
         $expr: req.body.paymentStatus === "Pending" ? { $lt: [ '$paidAmount' , '$finalPrice'] } : { $gte: [ '$paidAmount' , '$finalPrice'] }
     }).skip(offset).limit(limit).then(async (response) => {
         await Investment.count({
             buyedFrom: search,
+            ...{
+                ...(startDate && endDate) && {
+                    createdAt: {
+                        $gte: startDate,
+                        $lte: endDate
+                    }
+                }
+            },
             $expr: req.body.paymentStatus === "Pending" ? { $lt: [ '$paidAmount' , '$finalPrice'] } : { $gte: [ '$paidAmount' , '$finalPrice'] }
         }).then((countRes) => {
             res.status(statusCodes.success).json({
