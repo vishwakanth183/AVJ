@@ -15,6 +15,7 @@ import CommonLoader from '../../../../shared/components/commonLoader';
 import CommonPagination from '../../../../shared/components/Pagination/commonPagination';
 import { postMethod } from '../../../../redux/HttpRouting/httpRoutingRedux';
 import { Confirmation } from '../../../../shared/components/confirmation';
+import { Select } from 'chakra-react-select';
 
 const SelectedProducts = (props) => {
 
@@ -23,6 +24,33 @@ const SelectedProducts = (props) => {
 
     // Variable to handle search
     const [search, setSearch] = useState('');
+
+    //Variable to maintain product type values
+    const productType = [
+        {
+            value: 0,
+            label: 'Hardware',
+        },
+        {
+            value: 1,
+            label: 'Electrical',
+        },
+        {
+            value: 2,
+            label: 'Pipes',
+        },
+        {
+            value: 3,
+            label: 'Paints',
+        },
+        {
+            value: 4,
+            label: 'All Type'
+        }
+    ]
+
+    // Variable to handle selected product type
+    const [selectedProductType, setSelectedProductType] = useState(productType[4])
 
     //Handling appcolors based on color mode
     const [appColors, setAppColors] = useState(lightTheme)
@@ -125,7 +153,8 @@ const SelectedProducts = (props) => {
             data: {
                 offset: offset !== null ? offset * rowsPerPage : page * rowsPerPage,
                 limit: limit !== null ? limit : rowsPerPage,
-                search: clearSearch ? '' : search
+                search: clearSearch ? '' : search,
+                productType: selectedProductType ? selectedProductType.label : productType[4].label
             }
         })).unwrap().then((res) => {
             dispatch(updateProductList(res))
@@ -287,7 +316,7 @@ const SelectedProducts = (props) => {
     useEffect(() => {
         dispatch(resetProductList())
         getProductListData({ offset: 0 })
-    }, [])
+    }, [selectedProductType])
 
     //UseEffect which will be called while searching a particular product
     useEffect(() => {
@@ -324,6 +353,8 @@ const SelectedProducts = (props) => {
 
             {/* Search bar View */}
             <HStack m={10} ml={5} justifyContent={'space-between'}>
+
+                {/* Search input */}
                 <InputGroup maxW={'80%'} borderRadius={'full'}>
                     <Input
                         fontFamily={config.fontFamily}
@@ -353,6 +384,24 @@ const SelectedProducts = (props) => {
                         </ButtonGroup>
                     </InputRightElement>
                 </InputGroup>
+
+                {/* Filter View */}
+                <Box display={'flex'} justifyContent='flex-end' m={5} mr={10}>
+                    <Box minW={isLargerThan700 ? 300 : 200}>
+                        <Select
+                            isMulti={false}
+                            isRequired={true}
+                            placeholder={isLargerThan700 ? 'Select date filter' : 'Select ...'}
+                            className={'selectDateFilter'}
+                            value={selectedProductType}
+                            defaultValue={productType[4]}
+                            onChange={(selectedValue) => {
+                                setSelectedProductType(selectedValue)
+                            }}
+                            options={productType}
+                        />
+                    </Box>
+                </Box>
             </HStack>
 
             {productsReducer.status === 'loading' ?

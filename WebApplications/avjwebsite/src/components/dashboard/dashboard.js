@@ -9,6 +9,7 @@ import {
     StatArrow,
     StatGroup,
     Box,
+    Avatar,
 } from '@chakra-ui/react';
 import { Select } from 'chakra-react-select';
 
@@ -136,7 +137,8 @@ const Dashboard = (props) => {
                             >
 
                                 <GridItem rowSpan={isLargerThan700 ? 5 : 1} colSpan={isLargerThan700 ? 1 : 5}>
-                                    <Image src={shopImage} height={520} width={isLargerThan700 ? 350 : '100%'} />
+                                    {/* <Image src={shopImage} height={520} width={isLargerThan700 ? 350 : '100%'} /> */}
+                                    <Avatar size='2xl' height={350} borderRadius={'full'} src={shopImage} width={350} m={5}/>
                                 </GridItem>
 
                                 <GridItem colSpan={isLargerThan700 ? 3 : 1}>
