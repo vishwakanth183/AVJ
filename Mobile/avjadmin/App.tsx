@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import React,{useEffect} from 'react';
-// import SplashScreen from "react-native-splash-screen";
+import SplashScreen from "react-native-splash-screen";
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
 
@@ -13,11 +13,11 @@ const App: React.FC = () => {
   const Drawer = createDrawerNavigator();
 
   //Hide Splash screen on app load.
-  // useEffect(() => {
-  //   setTimeout(()=>{
-  //     SplashScreen.hide();
-  //   },2000)
-  // },[]);
+  useEffect(() => {
+    setTimeout(()=>{
+      SplashScreen.hide();
+    },2000)
+  },[]);
 
   return (
     <NavigationContainer>
