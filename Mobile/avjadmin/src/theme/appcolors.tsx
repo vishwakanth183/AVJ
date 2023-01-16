@@ -3,5 +3,7 @@ export const appColors = {
     light : '#ffffff',
     dark : '#000000',
     lightGrey : '#DCD4D4',
-    grey : '#8B7B7B'
+    grey : '#8B7B7B',
+    indigo : 'indigo',
+    coral : 'coral'
 }

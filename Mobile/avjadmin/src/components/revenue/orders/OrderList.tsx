@@ -4,10 +4,10 @@ import { Card , Divider} from 'react-native-elements';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 
 //Custom imports
-import { data } from '../../assets/orderData';
-import { appColors } from '../theme/appcolors';
-import { appFonts } from '../theme/appFonts';
-import CommonHeader from '../shared/commonHeader';
+import { data } from '../../../../assets/orderData';
+import { appColors } from '../../../theme/appcolors';
+import { appFonts } from '../../../theme/appFonts';
+import CommonHeader from '../../../shared/commonHeader';
 
 //props interface
 interface Props {

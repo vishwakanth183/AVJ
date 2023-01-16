@@ -1,0 +1,8 @@
+export const DashboardHeader = 'Dashboard'
+export const ProductListHeader = 'Products'
+export const RestoreProductsHeader = 'Restore Products'
+export const OrderListHeader = 'Orders'
+export const LineBusinessHeader = 'LineBusiness'
+export const InvestmentHeader = 'Investment'
+export const FamilyExpenseHeader = 'Family Expenses'
+export const BorrowedHeader = 'Borrowed'
