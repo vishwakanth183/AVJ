@@ -32,7 +32,7 @@ module.exports.signUp = signUp
 const login = async(credentials) =>{
     try
     {
-        const user = await User.findOne({name : credentials.name});
+        let user = await User.findOne({name : credentials.name});
         if(!user)throw 'Invalid user'
         const hashedPassword = CryptoJS.AES.decrypt(user.password,process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
         if(credentials.password!=hashedPassword)throw 'Invalid Password'
@@ -43,6 +43,8 @@ const login = async(credentials) =>{
             phno : user.phno,
             role : user.role
         },process.env.JWT_KEY,{expiresIn : '1d'})
+        user = user.toObject()
+        delete user.password
         return {userDetails : user , accessToken : token}
     }
     catch(error)

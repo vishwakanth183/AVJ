@@ -229,7 +229,7 @@ const ProductList = (props) => {
                                         flexWrap={'wrap'}
                                         // maxW={170}
                                         color={appColors.textColor}>
-                                        {item?.productName?.length > 20 ? item?.productName?.slice(0, 15) : item?.productName}
+                                        {item?.productName?.length > 20 ? item?.productName : item?.productName}
                                     </Text>
 
                                     <ButtonGroup spacing={2}>
@@ -245,7 +245,7 @@ const ProductList = (props) => {
                                 {/* <Box display={'flex'} flexDirection={'column'}> */}
                                 <Wrap alignItems={'flex-start'} mt={5}>
                                     <WrapItem>
-                                        <Badge colorScheme='green' pl={2} pr={2} pt={1} pb={1} mb={2} mr={2} fontFamily={config.fontFamily} borderRadius={7}>
+                                        <Badge colorScheme='orange' pl={2} pr={2} pt={1} pb={1} mb={2} mr={2} fontFamily={config.fontFamily} borderRadius={7}>
                                             {item?.brandName}
                                         </Badge>
                                     </WrapItem>
@@ -266,7 +266,7 @@ const ProductList = (props) => {
                                                     fontFamily={config.fontFamily}
                                                     borderRadius='full'
                                                     variant='solid'
-                                                    colorScheme={'green'}
+                                                    colorScheme={'facebook'}
                                                 >
                                                     <TagLabel>{item}</TagLabel>
                                                 </Tag>

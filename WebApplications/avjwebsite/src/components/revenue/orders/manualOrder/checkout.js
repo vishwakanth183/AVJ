@@ -150,6 +150,17 @@ const Checkout = ({ orderId = null, selectedProducts = [], orderDetails = null }
                 const currentProductSalesPrice = (cartItem.quantity) * perMeterSalesPrice;
                 checkoutSummary.orderSalesPrice = checkoutSummary.orderSalesPrice + currentProductSalesPrice
             }
+            else if (cartItem.weightUnit === 'Feet') {
+                // Purchase price
+                const perFeetPurchasePrice = cartItem.purchasePrice;
+                const currentProductPurchasePrice = (cartItem.quantity) * perFeetPurchasePrice
+                checkoutSummary.orderPurchasePrice = checkoutSummary.orderPurchasePrice + currentProductPurchasePrice
+
+                // Sales price
+                const perFeetSalesPrice = cartItem.salesPrice;
+                const currentProductSalesPrice = (cartItem.quantity) * perFeetSalesPrice;
+                checkoutSummary.orderSalesPrice = checkoutSummary.orderSalesPrice + currentProductSalesPrice
+            }
             else if (cartItem.weightUnit === 'Kg') {
 
                 // Purchase price

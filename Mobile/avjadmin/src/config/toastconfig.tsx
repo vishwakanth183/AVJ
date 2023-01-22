@@ -40,6 +40,7 @@ export const toastConfig = {
       <ErrorToast
         {...props}
         text1Style={{
+          fontSize: appFonts.mobileText,
             fontFamily : appFonts.semibold,
           fontWeight : null,
           color : appColors.dark,

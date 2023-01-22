@@ -5,7 +5,6 @@ import SplashScreen from "react-native-splash-screen";
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
 import { Provider } from 'react-redux'
-import { Toast } from 'react-native-toast-message/lib/src/Toast';
 
 //custom file imports
 import store from './src/redux/store';
@@ -24,7 +23,6 @@ const App: React.FC = () => {
   return (
     <Provider store={store}>
       {/* <ThemeProvider theme={theme}> */}
-      <Toast />
       <Mainstack />
       {/* </ThemeProvider> */}
     </Provider>

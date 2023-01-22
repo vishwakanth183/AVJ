@@ -101,6 +101,10 @@ const AddEditProducts = ({ props, productId }) => {
             value: 7,
             label: 'Feet'
         },
+        {
+            value: 8,
+            label: 'Tin'
+        },
     ]
 
     //Validation schema for fomrik values
@@ -209,11 +213,11 @@ const AddEditProducts = ({ props, productId }) => {
         validationSchema: validationSchema,
         initialValues: {
             productName: productDetails && productDetails.productName ? productDetails.productName : '',
-            brandName: productDetails && productDetails.brandName ? productDetails.brandName : '',
-            productType: productDetails && productDetails.productType ? getProductType() : '',
+            brandName: productDetails && productDetails.brandName ? productDetails.brandName : 'No Brand',
+            productType: productDetails && productDetails.productType ? getProductType() : productType[3].value,
             purchasePrice: productDetails && productDetails.purchasePrice ? productDetails.purchasePrice : '',
             salesPrice: productDetails && productDetails.salesPrice ? productDetails.salesPrice : '',
-            weightUnit: productDetails && productDetails.weightUnit ? getWeightUnit() : '',
+            weightUnit: productDetails && productDetails.weightUnit ? getWeightUnit() : weightUnitsArray[8].value,
             stock: productDetails && productDetails.stock ? productDetails.stock : 0,
             minimumStock: productDetails && productDetails.minimumStock ? productDetails.minimumStock : 0,
             description: productDetails && productDetails.description ? productDetails.description : '',

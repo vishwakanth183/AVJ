@@ -80,8 +80,8 @@ const Signin: FC<NavigationProps> = ({ navigation: navigation }) => {
   return (
     <Animated.View style={{ flex: 1 }}>
       <StatusBar backgroundColor={appColors.dark} />
-      <Toast autoHide config={toastConfig} position={'bottom'} />
       <ImageBackground resizeMode='repeat' style={{ flex: 1 }} source={require('../../../assets/images/spanner.jpg')}>
+      <Toast autoHide config={toastConfig} position={'bottom'} />
 
         {/* Total card view */}
         <Animated.ScrollView 
