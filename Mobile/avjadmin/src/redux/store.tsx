@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux'
 import rootReducer from './rootReducer'
 import CreateSagaMiddleware from 'redux-saga'
 import { productSaga } from './saga/productsaga'
+import { authSaga , userDetailsInterface } from './saga/authSaga'
 
 const sagaMiddleware = CreateSagaMiddleware()
 
@@ -12,6 +13,7 @@ const store = configureStore({
 })
 
 sagaMiddleware.run(productSaga)
+sagaMiddleware.run(authSaga)
 
 export type AppDispatch = typeof store.dispatch
 export type RootState = ReturnType<typeof store.getState>

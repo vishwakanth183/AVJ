@@ -2,15 +2,17 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Header } from 'react-native-elements';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
+import { useNavigation } from "@react-navigation/native";
 
 // Custom imports
 import { appColors } from '../theme/appcolors'
+import { NavigationProps } from "./commonInterface/commonInterface";
 
 interface Props {
     title: string,
-    navigation: {
-        openDrawer: () => {}
-    }
+    // navigation: {
+    //     openDrawer: () => {}
+    // }
 }
 
 const styles = StyleSheet.create({
@@ -22,7 +24,9 @@ const styles = StyleSheet.create({
 })
 
 //-- Function to render common header for the application --//
-const CommonHeader: React.FC<Props> = ({ title: pageTitle, navigation: navigation }) => {
+const CommonHeader: React.FC<Props> = ({ title: pageTitle }) => {
+
+    const navigation = useNavigation<NavigationProps>()
     return (
         <Header
             backgroundColor={appColors.primary}

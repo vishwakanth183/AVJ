@@ -5,5 +5,6 @@ export const appColors = {
     lightGrey : '#DCD4D4',
     grey : '#8B7B7B',
     indigo : 'indigo',
-    coral : 'coral'
+    coral : 'coral',
+    borderColor : '#ddd'
 }

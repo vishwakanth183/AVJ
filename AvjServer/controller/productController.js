@@ -26,7 +26,7 @@ const createProduct = async (req, res) => {
     }).catch((error) => {
         console.log('error', error)
         if (error.code === 11000) {
-            res.status(11000).json("Duplicate product ! Can't add a product with same name more than once")
+            res.status(statusCodes.unprocessableEntity).json("Duplicate product ! Can't add a product with same name more than once")
         }
         else {
 

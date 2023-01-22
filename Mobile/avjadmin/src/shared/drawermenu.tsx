@@ -1,12 +1,12 @@
 import { BorrowedNavigation, DashboardNavigation, FamilyExpenseNavigation, InvestmentNavigation, LineBusinessNavigation, OrderListNavigation, ProductNavigation, RestoreProductNavigation } from "./commonConstant/navigationConstants";
 
-const MaterialIcon = 'material'
-const MaterialCommunityIcons = 'material-community' 
-const FontAwesome5 = 'font-awesome-5'
-const FontAwesome = 'font-awesome'
-const Ionicon = 'ionicon'
-const AntDesign = 'antdesign'
-const Entypo = 'entypo'
+export const MaterialIcon = 'material'
+export const MaterialCommunityIcons = 'material-community' 
+export const FontAwesome5 = 'font-awesome-5'
+export const FontAwesome = 'font-awesome'
+export const Ionicon = 'ionicon'
+export const AntDesign = 'antdesign'
+export const Entypo = 'entypo'
 
 
 export const drawerMenu = [
